@@ -102,7 +102,7 @@
           <p class="text-slate-500 font-medium text-sm hidden md:block">Monitoring layout gudang dan utilisasi racking secara real-time</p>
         </div>
         <div class="flex items-center gap-3">
-          <!-- Tombol Input Location dipindah ke paling atas kanan sejajar judul -->
+          <!-- Tombol Input Location -->
           <button onclick="openModal()" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-xl shadow-md text-sm font-medium flex items-center gap-2 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
             Input Location
@@ -146,7 +146,6 @@
       <div id="section-container" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm overflow-hidden">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 class="font-bold text-xl text-slate-800">Warehouse Management</h2>
-          <!-- Tombol Input Location sudah dihapus dari sini -->
         </div>
         <div class="overflow-x-auto rounded-xl border border-slate-100">
           <table class="w-full text-left border-collapse min-w-[900px]">
@@ -200,8 +199,8 @@
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Rack</label>
             <select id="input-rak" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
-              <option>Rack AA</option><option>Rack BB</option><option>Rack CC</option>
-              <option>Rack DD</option><option>Rack EE</option><option>Rack FF</option>
+              <option value="Rack AA">Rack AA</option><option value="Rack BB">Rack BB</option><option value="Rack CC">Rack CC</option>
+              <option value="Rack DD">Rack DD</option><option value="Rack EE">Rack EE</option><option value="Rack FF">Rack FF</option>
             </select>
           </div>
           <div>
@@ -279,6 +278,51 @@
       t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 ${type==='success' ? 'bg-emerald-600' : 'bg-red-600'}`;
       t.classList.remove('-translate-y-24', 'opacity-0');
       setTimeout(()=> t.classList.add('-translate-y-24', 'opacity-0'), 3500);
+    }
+
+    // --- FUNGSI PARSING LOKASI RAK ---
+    function parseLocationData(qrText) {
+      // Format yang didukung: AA.001.3
+      let parts = qrText.split(/[\.\-\,]/).map(s => s.trim());
+      
+      if (parts.length >= 3) {
+        let rackCode = parts[0].toUpperCase(); // "AA"
+        let rowCode = parts[1];                // "001"
+        let levelCode = parts[2];              // "3"
+
+        // Tambahkan kata 'Rack ' jika belum ada (misal dari "AA" menjadi "Rack AA")
+        if (!rackCode.startsWith('RACK')) rackCode = 'Rack ' + rackCode;
+
+        // Auto Select: RACK
+        let rakSelect = document.getElementById('input-rak');
+        let rackOption = Array.from(rakSelect.options).find(opt => opt.value.toUpperCase() === rackCode.toUpperCase());
+        if (rackOption) {
+          rakSelect.value = rackOption.value;
+        } else {
+          // Jika rak belum ada di list default, tambahkan otomatis
+          const newOpt = document.createElement('option'); 
+          newOpt.value = rackCode; 
+          newOpt.textContent = rackCode; 
+          rakSelect.appendChild(newOpt); 
+          rakSelect.value = rackCode;
+        }
+
+        // Auto Select: ROW
+        document.getElementById('input-row').value = rowCode;
+
+        // Auto Select: LEVEL
+        let levelSelect = document.getElementById('input-level');
+        let levelOption = Array.from(levelSelect.options).find(opt => opt.value === levelCode);
+        if (levelOption) {
+          levelSelect.value = levelOption.value;
+        } else {
+          const newOpt = document.createElement('option'); 
+          newOpt.value = levelCode; 
+          newOpt.textContent = 'Level ' + levelCode; 
+          levelSelect.appendChild(newOpt); 
+          levelSelect.value = levelCode;
+        }
+      }
     }
 
     // --- FUNGSI AMBIL DATA (Ditambahkan Anti-Cache) ---
@@ -469,6 +513,12 @@
 
             // Jika lolos validasi, masukkan ke input form
             document.getElementById(`input-${target}`).value = scannedText;
+            
+            // 3. Tambahkan Auto-Parsing Jika Scan Location
+            if (target === 'location') {
+              parseLocationData(scannedText);
+            }
+
             window.closeScanner();
             showToast("✔ Berhasil memindai!", "success");
             playBeep();
