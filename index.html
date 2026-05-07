@@ -96,14 +96,22 @@
       </div>
 
       <!-- Header -->
-      <div class="flex justify-between items-center mb-8">
+      <div class="flex justify-between items-start md:items-center mb-8 flex-col sm:flex-row gap-4">
         <div>
           <h1 id="page-title" class="text-3xl font-black text-slate-900 mb-1 tracking-tight">Warehouse Dashboard</h1>
           <p class="text-slate-500 font-medium text-sm">Monitoring layout gudang dan utilisasi racking secara real-time</p>
         </div>
-        <button onclick="toggleSidebar()" class="md:hidden p-3 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-        </button>
+        <div class="flex items-center gap-3 self-end sm:self-auto">
+          <!-- Tombol Input Location dipindah ke sini -->
+          <button onclick="openModal()" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-xl shadow-md text-sm font-medium flex items-center gap-2 transition-all">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2"></path></svg>
+            Input Location
+          </button>
+          <!-- Tombol Menu Mobile -->
+          <button onclick="toggleSidebar()" class="md:hidden p-2.5 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-600 hover:bg-slate-50">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+        </div>
       </div>
 
       <!-- Section: Visualisasi Rak & Summary -->
@@ -138,10 +146,7 @@
       <div id="section-container" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm overflow-hidden">
         <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 class="font-bold text-xl text-slate-800">Warehouse Management</h2>
-          <button onclick="openModal()" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 transition-all">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M12 4v16m8-8H4" stroke-width="2"></path></svg>
-            Input Location
-          </button>
+          <!-- Tombol Input Location sudah dihapus dari sini -->
         </div>
         <div class="overflow-x-auto rounded-xl border border-slate-100">
           <table class="w-full text-left border-collapse min-w-[900px]">
