@@ -102,7 +102,7 @@
           <p class="text-slate-500 font-medium text-sm hidden md:block">Monitoring layout gudang dan utilisasi racking secara real-time</p>
         </div>
         <div class="flex items-center gap-3 self-end sm:self-auto">
-          <!-- Tombol Input Location dipindah ke paling atas kanan sejajar judul -->
+          <!-- Tombol Input Location -->
           <button onclick="openModal()" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-xl shadow-md text-sm font-medium flex items-center gap-2 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
             Input Location
@@ -121,7 +121,7 @@
             <h2 class="font-bold text-xl text-slate-800">Visualisasi Rak</h2>
           </div>
           <!-- Grid Rak -->
-          <div id="rack-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
+          <div id="rack-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
         </div>
         
         <!-- Summary Kanan -->
@@ -201,21 +201,23 @@
         <div class="bg-slate-50 p-4 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Rack</label>
-            <!-- Default dibuat Kosong (Blank) dan Wajib diisi (Required) -->
+            <!-- Opsi Sesuai Sheet 2 Kolom B -->
             <select id="input-rak" required class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
               <option value="" disabled selected></option>
-              <option value="Rack AA">Rack AA</option><option value="Rack BB">Rack BB</option><option value="Rack CC">Rack CC</option>
-              <option value="Rack DD">Rack DD</option><option value="Rack EE">Rack EE</option><option value="Rack FF">Rack FF</option>
+              <option value="AA">AA</option><option value="AB">AB</option><option value="AC">AC</option>
+              <option value="AD">AD</option><option value="AE">AE</option><option value="AF">AF</option>
+              <option value="AG">AG</option><option value="AH">AH</option><option value="AI">AI</option>
+              <option value="AJ">AJ</option><option value="AK">AK</option><option value="AL">AL</option>
+              <option value="AM">AM</option><option value="AN">AN</option><option value="AO">AO</option>
+              <option value="AP">AP</option><option value="AQ">AQ</option>
             </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Row</label>
-            <!-- Default dibuat Kosong tanpa placeholder -->
             <input type="text" id="input-row" required class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Level</label>
-            <!-- Default dibuat Kosong (Blank) dan Wajib diisi (Required) -->
             <select id="input-level" required class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
               <option value="" disabled selected></option>
               <option value="6">Level 6</option><option value="5">Level 5</option><option value="4">Level 4</option><option value="3">Level 3</option><option value="2">Level 2</option><option value="1">Level 1</option>
@@ -264,9 +266,26 @@
     const GAS_URL = "https://script.google.com/macros/s/AKfycbznaOvcN4Q96TVJGQtTNYBV8Bt-GzFoLg-sZxSaAfvNB6cVX-U1b-E8VZnqLrl9667H/exec";
     
     let containerData = [];
+    
+    // Konfigurasi dinamis sesuai persis dengan Sheet 2 Anda (Kapasitas & Jumlah Level per Rak)
     const rackConfig = [
-      { id: 'Rack AA', total: 100 }, { id: 'Rack BB', total: 100 }, { id: 'Rack CC', total: 120 },
-      { id: 'Rack DD', total: 120 }, { id: 'Rack EE', total: 80 }, { id: 'Rack FF', total: 80 }
+      { id: 'AA', total: 152, levels: 4 },
+      { id: 'AB', total: 190, levels: 5 },
+      { id: 'AC', total: 190, levels: 5 },
+      { id: 'AD', total: 228, levels: 6 },
+      { id: 'AE', total: 228, levels: 6 },
+      { id: 'AF', total: 228, levels: 6 },
+      { id: 'AG', total: 228, levels: 6 },
+      { id: 'AH', total: 190, levels: 5 },
+      { id: 'AI', total: 190, levels: 5 },
+      { id: 'AJ', total: 152, levels: 4 },
+      { id: 'AK', total: 152, levels: 4 },
+      { id: 'AL', total: 190, levels: 5 },
+      { id: 'AM', total: 190, levels: 5 },
+      { id: 'AN', total: 228, levels: 6 },
+      { id: 'AO', total: 174, levels: 6 },
+      { id: 'AP', total: 174, levels: 6 },
+      { id: 'AQ', total: 174, levels: 6 }
     ];
 
     function playBeep() {
@@ -290,24 +309,19 @@
 
     // --- FUNGSI PARSING LOKASI RAK ---
     function parseLocationData(qrText) {
-      // Memecah format QR: AA.001.4 menjadi array [AA, 001, 4]
       let parts = qrText.split(/[\.\-\,]/).map(s => s.trim());
       
       if (parts.length >= 3) {
-        let rackCode = parts[0].toUpperCase(); // misal "AA"
-        let rowCode = parts[1];                // misal "001"
-        let levelCode = parts[2];              // misal "4"
+        let rackCode = parts[0].toUpperCase(); // "AA", "AB"
+        let rowCode = parts[1];                // "001"
+        let levelCode = parts[2];              // "4"
 
-        // Tambahkan awalan 'Rack ' jika belum ada (misal dari "AA" menjadi "Rack AA")
-        if (!rackCode.startsWith('RACK')) rackCode = 'Rack ' + rackCode;
-
-        // Auto Select ke kolom RACK
+        // Auto Select ke kolom RACK (Kini tanpa tambahan awalan "Rack ")
         let rakSelect = document.getElementById('input-rak');
         let rackOption = Array.from(rakSelect.options).find(opt => opt.value.toUpperCase() === rackCode.toUpperCase());
         if (rackOption) {
           rakSelect.value = rackOption.value;
         } else {
-          // Jika rak kode baru, tambahkan option otomatis
           const newOpt = document.createElement('option'); 
           newOpt.value = rackCode; 
           newOpt.textContent = rackCode; 
@@ -337,17 +351,17 @@
     function formatDate(dateString) {
       if (!dateString) return '-';
       const date = new Date(dateString);
-      if (isNaN(date.getTime())) return dateString; // kembalikan string awal jika format invalid
+      if (isNaN(date.getTime())) return dateString; 
       
       const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
       const day = String(date.getDate()).padStart(2, '0');
       const month = months[date.getMonth()];
       const year = date.getFullYear();
       
-      return `${day}-${month}-${year}`; // Contoh: 10-Mei-2026
+      return `${day}-${month}-${year}`;
     }
 
-    // --- FUNGSI AMBIL DATA (Ditambahkan Anti-Cache) ---
+    // --- FUNGSI AMBIL DATA ---
     async function loadData() {
       renderRacks();
       renderTable();
@@ -386,13 +400,13 @@
       body.innerHTML = containerData.length === 0 ? '<tr><td colspan="9" class="p-8 text-center text-slate-400">Belum ada data.</td></tr>' : '';
       containerData.forEach(d => {
         const statusColor = d.status === 'Received' ? 'text-emerald-700 bg-emerald-50' : d.status === 'Dispatched' ? 'text-blue-700 bg-blue-50' : 'text-amber-700 bg-amber-50';
-        const formattedDate = formatDate(d.tanggal); // Memanggil format tanggal
+        const formattedDate = formatDate(d.tanggal); 
 
         body.innerHTML += `
           <tr class="text-sm hover:bg-slate-50 transition-colors">
             <td class="py-4 px-5 font-semibold text-slate-900">${d.location || '-'}</td>
             <td class="py-4 px-5 text-slate-600">${d.licencePlate || '-'}</td>
-            <td class="py-4 px-5 text-slate-600">${d.rack || '-'}</td>
+            <td class="py-4 px-5 text-slate-600 font-bold">Rack ${d.rack || '-'}</td>
             <td class="py-4 px-5 text-slate-600 font-medium">${d.row || '-'}</td>
             <td class="py-4 px-5 text-slate-600 font-bold">${d.level || '-'}</td>
             <td class="py-4 px-5 text-blue-600 font-bold">${d.qty || '0'}</td>
@@ -407,14 +421,15 @@
       const container = document.getElementById('rack-container');
       container.innerHTML = '';
       
-      const levelColors = [
-        'bg-cyan-500',    // Level 6 (Biru Muda / Cyan)
-        'bg-slate-400',   // Level 5 (Abu-abu)
-        'bg-orange-500',  // Level 4 (Oranye)
-        'bg-red-600',     // Level 3 (Merah)
-        'bg-green-700',   // Level 2 (Hijau)
-        'bg-blue-700'     // Level 1 (Biru Tua)
-      ];
+      // Standar Warna Level Sesuai PDF 
+      const colorMap = {
+        6: 'bg-cyan-500',    // Level 6 (Biru Muda / Cyan)
+        5: 'bg-slate-400',   // Level 5 (Abu-abu)
+        4: 'bg-orange-500',  // Level 4 (Oranye)
+        3: 'bg-red-600',     // Level 3 (Merah)
+        2: 'bg-green-700',   // Level 2 (Hijau)
+        1: 'bg-blue-700'     // Level 1 (Biru Tua)
+      };
 
       rackConfig.forEach(rack => {
         const currentQty = containerData.filter(d => d.rack === rack.id).reduce((sum, item) => {
@@ -422,23 +437,20 @@
         }, 0);
         
         const usagePercentage = Math.min(100, Math.max(0, Math.round((currentQty / rack.total) * 100)));
-        // Kapasitas tiap level sekarang dibagi 6
-        const palletsPerLevel = rack.total / 6;
+        const palletsPerLevel = rack.total / rack.levels;
 
         let badgeColor = usagePercentage > 85 ? 'bg-red-100 text-red-700' : usagePercentage > 50 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
 
         let barsHtml = '';
-        // Looping diubah dari 5 menjadi 6
-        for (let i = 0; i < 6; i++) {
-          const levelNum = 6 - i;
-          const colorClass = levelColors[i];
+        // Jumlah tumpukan digambar dinamis sesuai data Sheet 2 (misal Rak AA 4 Level, AD 6 Level)
+        for (let i = 0; i < rack.levels; i++) {
+          const levelNum = rack.levels - i; 
+          const colorClass = colorMap[levelNum];
           
-          // Menghitung Qty secara spesifik hanya untuk Level ini saja
           const levelQty = containerData.filter(d => d.rack === rack.id && Number(d.level) === levelNum).reduce((sum, item) => {
             return item.jenis === 'Masuk' ? sum + Number(item.qty) : sum - Number(item.qty);
           }, 0);
 
-          // Mengisi baris berdasarkan Qty di Level tersebut
           const filledInLevel = Math.max(0, Math.min(palletsPerLevel, levelQty));
           const fillPercentage = (filledInLevel / palletsPerLevel) * 100;
           
@@ -455,7 +467,7 @@
           <div class="bg-white border border-slate-200 rounded-xl hover:shadow-md transition-all">
             <div class="p-5 border-b border-slate-100 flex justify-between items-start">
               <div>
-                <h3 class="font-bold text-lg text-slate-800">${rack.id}</h3>
+                <h3 class="font-bold text-lg text-slate-800">Rack ${rack.id}</h3>
                 <span class="inline-block px-2 rounded text-xs font-bold mt-1 ${badgeColor}">${usagePercentage}% TERISI</span>
               </div>
               <div class="text-right">
@@ -470,7 +482,7 @@
       });
     }
 
-    // --- FUNGSI SIMPAN DATA (BYPASS CORS DENGAN GET) ---
+    // --- FUNGSI SIMPAN DATA ---
     document.getElementById('form-container').onsubmit = async (e) => {
       e.preventDefault();
       const btn = document.getElementById('btn-submit');
@@ -491,7 +503,6 @@
       };
 
       try {
-        // MENGGUNAKAN METODE GET UNTUK BYPASS BLOKIRAN BROWSER 100%
         const urlToFetch = GAS_URL + "?action=insert&t=" + Date.now() + "&data=" + encodeURIComponent(JSON.stringify(payload));
         const res = await fetch(urlToFetch);
         const result = await res.json();
@@ -519,9 +530,8 @@
     window.startScan = (target) => {
       document.getElementById('scanner-screen').classList.remove('hidden');
       document.getElementById('reader').innerHTML = '';
-      document.getElementById('scan-error').innerText = ''; // Reset pesan error sebelumnya
+      document.getElementById('scan-error').innerText = ''; 
       
-      // Ganti subtitle agar user tahu sedang scan apa
       const subtitle = document.getElementById('scanner-subtitle');
       if (subtitle) {
         subtitle.innerText = target === 'licence' ? 'SCAN LICENCE PLATE (LP-...)' : 'SCAN LOKASI RAK';
@@ -536,22 +546,18 @@
             const scannedText = text.trim();
             const isLicencePlate = scannedText.toUpperCase().startsWith('LP-');
 
-            // 1. Validasi saat scan Licence Plate (Harus awalan LP-)
             if (target === 'licence' && !isLicencePlate) {
               document.getElementById('scan-error').innerText = "✖ SALAH INPUT! QR bukan Licence Plate (Harus awalan LP-)";
-              return; // Jangan ditutup kameranya, biarkan user coba lagi
+              return; 
             }
 
-            // 2. Validasi saat scan Location (TIDAK BOLEH awalan LP-)
             if (target === 'location' && isLicencePlate) {
               document.getElementById('scan-error').innerText = "✖ SALAH INPUT! Ini QR Licence Plate, harap scan QR Lokasi.";
-              return; // Jangan ditutup kameranya, biarkan user coba lagi
+              return; 
             }
 
-            // Jika lolos validasi, masukkan ke input form
             document.getElementById(`input-${target}`).value = scannedText;
             
-            // 3. Tambahkan Auto-Parsing Jika Scan Location
             if (target === 'location') {
               parseLocationData(scannedText);
             }
@@ -616,7 +622,6 @@
     }
 
     function openModal() { 
-      // Mereset formulir terlebih dahulu agar blank
       document.getElementById('form-container').reset(); 
       document.getElementById('input-modal').classList.remove('hidden'); 
       document.getElementById('input-tanggal').valueAsDate = new Date(); 
