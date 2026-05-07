@@ -276,12 +276,25 @@
       } catch (e) {}
     }
 
+    // Variabel untuk mengamankan timeout notifikasi agar tidak bentrok
+    let toastTimeout;
     function showToast(message, type = 'success') {
       const toast = document.getElementById('toast-notification');
       document.getElementById('toast-message').innerText = message;
-      toast.className = `fixed top-5 left-1/2 -translate-x-1/2 md:left-auto md:-translate-x-0 md:right-5 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 ${type === 'success' ? 'bg-emerald-600' : 'bg-red-600'}`;
-      setTimeout(() => { toast.classList.remove('-translate-y-24', 'opacity-0'); }, 10);
-      setTimeout(() => { toast.classList.add('-translate-y-24', 'opacity-0'); }, 4000);
+      
+      // Mengubah warna berdasarkan tipe info
+      let bgColorClass = 'bg-emerald-600'; // Default success
+      if (type === 'error') bgColorClass = 'bg-red-600';
+      else if (type === 'info') bgColorClass = 'bg-blue-600'; // Warna untuk proses loading
+
+      toast.className = `fixed top-5 left-1/2 -translate-x-1/2 md:left-auto md:-translate-x-0 md:right-5 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 ${bgColorClass}`;
+      
+      toast.classList.remove('-translate-y-24', 'opacity-0');
+      
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { 
+        toast.classList.add('-translate-y-24', 'opacity-0'); 
+      }, 4000);
     }
 
     // --- HTML5-QRCode LIVE SCANNER ---
@@ -590,10 +603,8 @@
     document.getElementById('btn-open-modal').addEventListener('click', () => { populateRackOptions(); document.getElementById('input-tanggal').valueAsDate = new Date(); modal.classList.remove('hidden'); });
     document.getElementById('btn-close-modal').addEventListener('click', () => { modal.classList.add('hidden'); form.reset(); });
 
-    form.addEventListener('submit', async function(e) {
+    form.addEventListener('submit', function(e) {
       e.preventDefault();
-      const submitBtn = document.getElementById('btn-submit-modal');
-      submitBtn.innerText = 'Menyimpan...'; submitBtn.disabled = true;
 
       const locVal = document.getElementById('input-location').value.trim();
       const licVal = document.getElementById('input-licence').value.trim();
@@ -601,12 +612,10 @@
       // VERIFIKASI KEAMANAN SAAT SUBMIT MANUAL
       if (locVal.toUpperCase().startsWith('LP-')) {
         showToast("✖ DITOLAK! Location tidak boleh berawalan LP-", "error");
-        submitBtn.innerText = 'Simpan Data'; submitBtn.disabled = false;
         return;
       }
       if (!licVal.toUpperCase().startsWith('LP-')) {
         showToast("✖ DITOLAK! Licence Plate wajib berawalan LP-", "error");
-        submitBtn.innerText = 'Simpan Data'; submitBtn.disabled = false;
         return;
       }
 
@@ -617,31 +626,42 @@
         status: document.getElementById('input-status').value, tanggal: document.getElementById('input-tanggal').value
       };
 
-      try {
-        const urlToFetch = GAS_URL + "?action=insert&t=" + Date.now() + "&data=" + encodeURIComponent(JSON.stringify(newData));
-        const res = await fetch(urlToFetch);
-        const result = await res.json();
-        
-        if(result.status === 'success') {
-          showToast("✔ Data berhasil terinput ke database", "success");
-          containerData.unshift(newData); 
-          
-          // PERBAIKAN: Memanggil renderRacks dan renderSummary setelah data diunshift
-          renderRacks(); 
-          renderSummary(); 
-          renderTable();
-          
-          modal.classList.add('hidden'); form.reset();
-          playBeep();
-        } else {
-          showToast("✖ GAGAL: " + result.message, "error");
-        }
-      } catch (error) {
-        showToast("✖ GAGAL MENGIRIM! Periksa koneksi internet.", "error");
-        console.error("Save Error:", error);
-      } finally {
-        submitBtn.innerText = 'Simpan Data'; submitBtn.disabled = false;
-      }
+      // --- OPTIMISTIC UI UPDATE: LANGSUNG UPDATE UI SEBELUM PENGIRIMAN ---
+      containerData.unshift(newData); 
+      renderRacks(); 
+      renderSummary(); 
+      renderTable();
+      
+      modal.classList.add('hidden'); 
+      form.reset();
+      playBeep();
+
+      // Tampilkan notifikasi sedang memproses di background
+      showToast("⏳ Sedang menyimpan ke database...", "info");
+
+      // --- PROSES PENGIRIMAN KE GOOGLE SHEET SECARA ASYNCHRONOUS ---
+      const urlToFetch = GAS_URL + "?action=insert&t=" + Date.now() + "&data=" + encodeURIComponent(JSON.stringify(newData));
+      
+      fetch(urlToFetch)
+        .then(res => res.json())
+        .then(result => {
+          if(result.status === 'success') {
+            // Berhasil
+            showToast("✔ Data berhasil terinput ke database", "success");
+          } else {
+            // Rollback jika server gagal
+            containerData.shift(); 
+            renderRacks(); renderSummary(); renderTable();
+            showToast("✖ GAGAL: " + result.message, "error");
+          }
+        })
+        .catch(error => {
+          // Rollback jika internet putus
+          containerData.shift(); 
+          renderRacks(); renderSummary(); renderTable();
+          showToast("✖ GAGAL MENGIRIM! Periksa koneksi internet.", "error");
+          console.error("Save Error:", error);
+        });
     });
 
     window.onload = () => { loadInitialData(); };
