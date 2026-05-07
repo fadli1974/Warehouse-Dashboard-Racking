@@ -102,7 +102,7 @@
           <p class="text-slate-500 font-medium text-sm hidden md:block">Monitoring layout gudang dan utilisasi racking secara real-time</p>
         </div>
         <div class="flex items-center gap-3 self-end sm:self-auto">
-          <!-- Tombol Input Location -->
+          <!-- Tombol Input Location dipindah ke paling atas kanan sejajar judul -->
           <button onclick="openModal()" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-xl shadow-md text-sm font-medium flex items-center gap-2 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
             Input Location
@@ -148,13 +148,14 @@
           <h2 class="font-bold text-xl text-slate-800">Warehouse Management</h2>
         </div>
         <div class="overflow-x-auto rounded-xl border border-slate-100">
-          <table class="w-full text-left border-collapse min-w-[900px]">
+          <table class="w-full text-left border-collapse min-w-[1000px]">
             <thead class="bg-slate-50/50 border-b border-slate-200">
               <tr class="text-sm">
                 <th class="py-4 px-5 font-semibold text-slate-700">Location</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Licence Plate</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Rack</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Row</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Level</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Qty</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Jenis</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Tanggal</th>
@@ -332,6 +333,20 @@
       }
     }
 
+    // --- FUNGSI FORMAT TANGGAL ---
+    function formatDate(dateString) {
+      if (!dateString) return '-';
+      const date = new Date(dateString);
+      if (isNaN(date.getTime())) return dateString; // kembalikan string awal jika format invalid
+      
+      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = months[date.getMonth()];
+      const year = date.getFullYear();
+      
+      return `${day}-${month}-${year}`; // Contoh: 10-Mei-2026
+    }
+
     // --- FUNGSI AMBIL DATA (Ditambahkan Anti-Cache) ---
     async function loadData() {
       renderRacks();
@@ -368,19 +383,21 @@
 
     function renderTable() {
       const body = document.getElementById('table-body');
-      // Kolom span diubah menjadi 8 menyesuaikan jumlah kolom header
-      body.innerHTML = containerData.length === 0 ? '<tr><td colspan="8" class="p-8 text-center text-slate-400">Belum ada data.</td></tr>' : '';
+      body.innerHTML = containerData.length === 0 ? '<tr><td colspan="9" class="p-8 text-center text-slate-400">Belum ada data.</td></tr>' : '';
       containerData.forEach(d => {
         const statusColor = d.status === 'Received' ? 'text-emerald-700 bg-emerald-50' : d.status === 'Dispatched' ? 'text-blue-700 bg-blue-50' : 'text-amber-700 bg-amber-50';
+        const formattedDate = formatDate(d.tanggal); // Memanggil format tanggal
+
         body.innerHTML += `
           <tr class="text-sm hover:bg-slate-50 transition-colors">
             <td class="py-4 px-5 font-semibold text-slate-900">${d.location || '-'}</td>
             <td class="py-4 px-5 text-slate-600">${d.licencePlate || '-'}</td>
             <td class="py-4 px-5 text-slate-600">${d.rack || '-'}</td>
             <td class="py-4 px-5 text-slate-600 font-medium">${d.row || '-'}</td>
+            <td class="py-4 px-5 text-slate-600 font-bold">${d.level || '-'}</td>
             <td class="py-4 px-5 text-blue-600 font-bold">${d.qty || '0'}</td>
             <td class="py-4 px-5 text-slate-600">${d.jenis || '-'}</td>
-            <td class="py-4 px-5 text-slate-600">${d.tanggal || '-'}</td>
+            <td class="py-4 px-5 text-slate-600">${formattedDate}</td>
             <td class="py-4 px-5"><span class="px-3 py-1.5 rounded-md border text-xs font-semibold ${statusColor}">${d.status || 'Pending'}</span></td>
           </tr>`;
       });
@@ -413,7 +430,7 @@
           const levelNum = 5 - i;
           const colorClass = levelColors[i];
           
-          // PERBAIKAN: Menghitung Qty secara spesifik hanya untuk Level ini saja
+          // Menghitung Qty secara spesifik hanya untuk Level ini saja
           const levelQty = containerData.filter(d => d.rack === rack.id && Number(d.level) === levelNum).reduce((sum, item) => {
             return item.jenis === 'Masuk' ? sum + Number(item.qty) : sum - Number(item.qty);
           }, 0);
