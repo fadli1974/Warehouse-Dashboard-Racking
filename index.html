@@ -623,8 +623,14 @@
         const result = await res.json();
         
         if(result.status === 'success') {
-          showToast("✔ Data berhasil terinput ke Spreadsheet!", "success");
-          containerData.unshift(newData); renderTable(); renderRacks(); renderSummary(); 
+          showToast("✔ Data berhasil terinput ke database", "success");
+          containerData.unshift(newData); 
+          
+          // PERBAIKAN: Memanggil renderRacks dan renderSummary setelah data diunshift
+          renderRacks(); 
+          renderSummary(); 
+          renderTable();
+          
           modal.classList.add('hidden'); form.reset();
           playBeep();
         } else {
