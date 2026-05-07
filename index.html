@@ -354,8 +354,10 @@
       historicalData.forEach(item => {
         const targetRack = rackData.find(r => r.title === item.rack);
         if (targetRack) {
-          if (item.jenis === 'Masuk') targetRack.current += 20; else if (item.jenis === 'Keluar') targetRack.current -= 20;
-          if (targetRack.current < 0) targetRack.current = 0; if (targetRack.current > targetRack.total) targetRack.current = targetRack.total;
+          if (item.jenis === 'Masuk') targetRack.current += parseInt(item.qty) || 0; 
+          else if (item.jenis === 'Keluar') targetRack.current -= parseInt(item.qty) || 0;
+          if (targetRack.current < 0) targetRack.current = 0; 
+          if (targetRack.current > targetRack.total) targetRack.current = targetRack.total;
           targetRack.percentage = Math.round((targetRack.current / targetRack.total) * 100);
         }
       });
@@ -398,7 +400,14 @@
           const levelNum = maxLevel - i; 
           const colorClass = colorMap[levelNum] || 'bg-slate-500';
           
-          const fillPercentage = (Math.max(0, Math.min(palletsPerLevel, rack.current - (levelNum - 1) * palletsPerLevel)) / palletsPerLevel) * 100;
+          // SINKRONISASI LEVEL: Membaca Qty spesifik sesuai data Level di Sheet 1
+          const levelQty = containerData.filter(d => d.rack === rack.title && Number(d.level) === levelNum).reduce((sum, item) => {
+            return item.jenis === 'Masuk' ? sum + (parseInt(item.qty) || 0) : sum - (parseInt(item.qty) || 0);
+          }, 0);
+
+          const filledInLevel = Math.max(0, Math.min(palletsPerLevel, levelQty));
+          const fillPercentage = (filledInLevel / palletsPerLevel) * 100;
+          
           barsHtml += `<div class="flex items-center gap-3 mb-2 last:mb-0"><div class="w-7 h-7 flex items-center justify-center text-sm font-bold text-white rounded shadow-sm ${colorClass}">${levelNum}</div><div class="h-4 w-full bg-slate-200 rounded-sm relative overflow-hidden shadow-inner"><div class="h-full ${colorClass} transition-all duration-1000 ease-out" style="width: ${fillPercentage}%"></div></div></div>`;
         }
         
