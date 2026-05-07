@@ -78,14 +78,18 @@
   </div>
 
   <div class="min-h-screen flex flex-col md:flex-row relative z-0">
+    <!-- Header Mobile (Hanya tampil di HP) -->
     <div class="md:hidden flex justify-between items-center bg-white p-4 border-b border-slate-200 z-40 sticky top-0 shadow-sm">
       <h2 class="text-xl font-bold text-slate-900">WMS Menu</h2>
       <button id="mobile-menu-btn" class="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 border border-slate-200 focus:outline-none">
         <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
       </button>
     </div>
+    
     <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 hidden transition-opacity"></div>
-    <div id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 z-40 w-64 bg-white border-r border-slate-200 sidebar-transition h-full overflow-y-auto shadow-lg md:shadow-none">
+    
+    <!-- Sidebar: Secara default ditambahkan md:hidden agar tersembunyi di Desktop -->
+    <div id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 z-40 w-64 bg-white border-r border-slate-200 sidebar-transition h-full overflow-y-auto shadow-lg md:shadow-none md:hidden">
       <div class="p-6 hidden md:block border-b border-slate-100">
         <h2 class="text-2xl font-black text-slate-900 tracking-tight">WMS<span class="text-blue-600">.</span></h2>
       </div>
@@ -102,13 +106,20 @@
         <p class="text-slate-500 font-medium animate-pulse">Menghubungkan ke Spreadsheet...</p>
       </div>
 
-      <!-- Header Terintegrasi (Judul + Horizontal Summary + Tombol) -->
+      <!-- Header Terintegrasi (Tombol Garis 3 + Judul + Horizontal Summary + Tombol Input) -->
       <div class="mb-6 md:mb-8 flex flex-col xl:flex-row justify-between items-center gap-6">
         
-        <!-- Judul Dashboard (Kiri) -->
-        <div class="shrink-0 w-full xl:w-auto text-center xl:text-left">
-          <h1 id="page-title" class="text-3xl font-bold text-slate-900 mb-2">Warehouse Dashboard</h1>
-          <p id="page-desc" class="text-slate-500 text-sm hidden md:block">Monitoring layout gudang dengan sistem racking dan Location management</p>
+        <!-- Judul Dashboard & Tombol Garis 3 (Kiri) -->
+        <div class="shrink-0 w-full xl:w-auto flex items-center justify-center xl:justify-start gap-4">
+          <!-- Tombol Desktop Menu (Baru ditambahkan) -->
+          <button onclick="toggleDesktopSidebar()" class="hidden md:flex p-2.5 bg-white rounded-lg shadow-sm border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none items-center justify-center">
+            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+          </button>
+          
+          <div class="text-center xl:text-left">
+            <h1 id="page-title" class="text-3xl font-bold text-slate-900 mb-1">Warehouse Dashboard</h1>
+            <p id="page-desc" class="text-slate-500 text-sm hidden md:block">Monitoring layout gudang dengan sistem racking dan Location management</p>
+          </div>
         </div>
 
         <!-- Summary Horizontal (Tengah) -->
@@ -363,6 +374,13 @@
         let levelFound = Array.from(levelSelect.options).some(opt => { if (opt.value === levelCode) { levelSelect.value = opt.value; return true; } return false; });
         if (!levelFound) { const newOpt = document.createElement('option'); newOpt.value = levelCode; newOpt.textContent = 'Level ' + levelCode; levelSelect.appendChild(newOpt); levelSelect.value = levelCode; }
       }
+    }
+
+    // --- FUNGSI TOGGLE UNTUK DESKTOP SIDEBAR ---
+    function toggleDesktopSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      sidebar.classList.toggle('md:hidden');
+      sidebar.classList.toggle('md:block');
     }
 
     function switchMenu(selectedMenu) {
