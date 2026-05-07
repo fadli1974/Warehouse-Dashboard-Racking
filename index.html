@@ -102,83 +102,78 @@
         <p class="text-slate-500 font-medium animate-pulse">Menghubungkan ke Spreadsheet...</p>
       </div>
 
-      <!-- Container Utama membagi Kiri (Konten) dan Kanan (Summary) -->
-      <div class="flex flex-col xl:flex-row gap-6 items-start">
+      <!-- Header Terintegrasi (Judul + Horizontal Summary + Tombol) -->
+      <div class="mb-6 md:mb-8 flex flex-col xl:flex-row justify-between items-center gap-6">
         
-        <!-- Kolom Kiri: Header + Konten Utama -->
-        <div class="flex-1 w-full min-w-0 flex flex-col gap-6">
-          
-          <!-- Header Dashboard -->
-          <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-            <div>
-              <h1 id="page-title" class="text-3xl font-bold text-slate-900 mb-2">Warehouse Dashboard</h1>
-              <p id="page-desc" class="text-slate-500">Monitoring layout gudang dengan sistem racking dan Location management</p>
-            </div>
-            <!-- Menggunakan class hidden sm:block untuk menyembunyikan gambar pada tampilan mobile -->
-            <img src="" alt="Dashboard Banner" class="hidden sm:block h-12 object-contain mx-auto">
-            <!-- Tombol Input Location -->
-            <button id="btn-open-modal" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shrink-0 shadow-sm transition-all">
-              <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-              Input Location
-            </button>
+        <!-- Judul Dashboard (Kiri) -->
+        <div class="shrink-0 w-full xl:w-auto text-center xl:text-left">
+          <h1 id="page-title" class="text-3xl font-bold text-slate-900 mb-2">Warehouse Dashboard</h1>
+          <p id="page-desc" class="text-slate-500 text-sm hidden md:block">Monitoring layout gudang dengan sistem racking dan Location management</p>
+        </div>
+
+        <!-- Summary Horizontal (Tengah) -->
+        <div class="flex gap-4 w-full xl:w-auto overflow-x-auto hide-scrollbar flex-1 justify-start xl:justify-center px-1 py-1">
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[200px]">
+            <div class="text-xs font-medium text-slate-500 mb-1">Total Rack</div>
+            <div id="summary-total-rack" class="font-bold text-2xl text-slate-800">-</div>
           </div>
-
-          <!-- Layout Gudang Section -->
-          <div id="section-layout" class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="font-bold text-xl text-slate-800">Visualisasi Rak</h2>
-            </div>
-            <!-- Grid dibentangkan lebih luas karena Summary dipindah ke luar -->
-            <div id="rack-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[200px]">
+            <div class="text-xs font-medium text-slate-500 mb-1">Utilisasi Keseluruhan</div>
+            <div id="summary-utilization" class="font-bold text-2xl text-slate-800">0%</div>
           </div>
-
-          <!-- Warehouse Management Section -->
-          <div id="section-container" class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm relative">
-            <div class="flex justify-between items-center mb-6">
-              <h2 class="font-bold text-xl text-slate-800">Warehouse Management</h2>
-            </div>
-            <div class="overflow-x-auto rounded-xl border border-slate-100">
-              <table class="w-full text-left border-collapse min-w-[1000px]">
-                <thead class="bg-slate-50/50 border-b border-slate-200">
-                  <tr class="text-sm">
-                    <th class="py-4 px-5 font-semibold text-slate-700">Location</th>
-                    <th class="py-4 px-5 font-semibold text-slate-700">Licence Plate</th>
-                    <th class="py-4 px-5 font-semibold text-slate-700">Rack</th>
-                    <th class="py-4 px-5 font-semibold text-slate-700">Row</th>
-                    <th class="py-4 px-5 font-semibold text-slate-700">Level</th>
-                    <th class="py-4 px-5 font-semibold text-slate-700">Qty</th>
-                    <th class="py-4 px-5 font-semibold text-slate-700">Jenis</th>
-                    <th class="py-4 px-5 font-semibold text-slate-700">Tanggal</th>
-                    <th class="py-4 px-5 font-semibold text-slate-700">Status</th>
-                  </tr>
-                </thead>
-                <tbody id="container-table-body"></tbody>
-              </table>
-            </div>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[160px] flex-1 max-w-[220px]">
+            <div class="text-xs font-medium text-slate-500 mb-1">Available Space</div>
+            <div id="summary-available" class="font-bold text-2xl text-slate-800">- <span class="text-sm font-medium text-slate-500">pallet</span></div>
           </div>
+        </div>
 
-        </div> <!-- Akhir Kolom Kiri -->
-
-        <!-- Kolom Kanan: Summary Card (Dipindah ke Pojok Kanan Atas) -->
-        <div class="w-full xl:w-[320px] shrink-0 xl:sticky xl:top-4">
-          <div class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm">
-            <h2 class="font-bold text-xl text-slate-800 mb-6">Summary</h2>
-            <div class="bg-slate-50/80 border border-slate-100 rounded-xl p-5 mb-4">
-              <div class="text-sm font-medium text-slate-500 mb-1">Total Rack</div>
-              <div id="summary-total-rack" class="font-bold text-2xl text-slate-800">-</div>
-            </div>
-            <div class="bg-slate-50/80 border border-slate-100 rounded-xl p-5 mb-4">
-              <div class="text-sm font-medium text-slate-500 mb-1">Utilisasi Keseluruhan</div>
-              <div id="summary-utilization" class="font-bold text-2xl text-slate-800">0%</div>
-            </div>
-            <div class="bg-slate-50/80 border border-slate-100 rounded-xl p-5">
-              <div class="text-sm font-medium text-slate-500 mb-1">Available Space</div>
-              <div id="summary-available" class="font-bold text-2xl text-slate-800">- <span class="text-sm font-medium text-slate-500">pallet</span></div>
-            </div>
-          </div>
-        </div> <!-- Akhir Kolom Kanan -->
-
+        <!-- Tombol Input Location (Kanan) -->
+        <div class="shrink-0 w-full xl:w-auto flex justify-center xl:justify-end">
+          <button id="btn-open-modal" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all whitespace-nowrap">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+            Input Location
+          </button>
+        </div>
       </div>
+
+      <!-- Konten Utama (Kini Lebar Penuh/Full Width) -->
+      <div class="flex flex-col gap-6">
+        
+        <!-- Layout Gudang Section -->
+        <div id="section-layout" class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="font-bold text-xl text-slate-800">Visualisasi Rak</h2>
+          </div>
+          <!-- Grid dibentangkan lebih luas hingga 5 kolom di monitor besar -->
+          <div id="rack-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6"></div>
+        </div>
+
+        <!-- Warehouse Management Section -->
+        <div id="section-container" class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm relative">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="font-bold text-xl text-slate-800">Warehouse Management</h2>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-slate-100">
+            <table class="w-full text-left border-collapse min-w-[1000px]">
+              <thead class="bg-slate-50/50 border-b border-slate-200">
+                <tr class="text-sm">
+                  <th class="py-4 px-5 font-semibold text-slate-700">Location</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Licence Plate</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Rack</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Row</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Level</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Qty</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Jenis</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Tanggal</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Status</th>
+                </tr>
+              </thead>
+              <tbody id="container-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div> <!-- Akhir Konten Utama -->
     </div>
   </div>
 
