@@ -218,7 +218,7 @@
             <!-- Default dibuat Kosong (Blank) dan Wajib diisi (Required) -->
             <select id="input-level" required class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
               <option value="" disabled selected></option>
-              <option value="5">Level 5</option><option value="4">Level 4</option><option value="3">Level 3</option><option value="2">Level 2</option><option value="1">Level 1</option>
+              <option value="6">Level 6</option><option value="5">Level 5</option><option value="4">Level 4</option><option value="3">Level 3</option><option value="2">Level 2</option><option value="1">Level 1</option>
             </select>
           </div>
         </div>
@@ -408,11 +408,12 @@
       container.innerHTML = '';
       
       const levelColors = [
-        'bg-slate-400',   // Level 5
-        'bg-orange-500',  // Level 4
-        'bg-red-600',     // Level 3
-        'bg-green-700',   // Level 2
-        'bg-blue-700'     // Level 1
+        'bg-cyan-500',    // Level 6 (Biru Muda / Cyan)
+        'bg-slate-400',   // Level 5 (Abu-abu)
+        'bg-orange-500',  // Level 4 (Oranye)
+        'bg-red-600',     // Level 3 (Merah)
+        'bg-green-700',   // Level 2 (Hijau)
+        'bg-blue-700'     // Level 1 (Biru Tua)
       ];
 
       rackConfig.forEach(rack => {
@@ -421,13 +422,15 @@
         }, 0);
         
         const usagePercentage = Math.min(100, Math.max(0, Math.round((currentQty / rack.total) * 100)));
-        const palletsPerLevel = rack.total / 5;
+        // Kapasitas tiap level sekarang dibagi 6
+        const palletsPerLevel = rack.total / 6;
 
         let badgeColor = usagePercentage > 85 ? 'bg-red-100 text-red-700' : usagePercentage > 50 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
 
         let barsHtml = '';
-        for (let i = 0; i < 5; i++) {
-          const levelNum = 5 - i;
+        // Looping diubah dari 5 menjadi 6
+        for (let i = 0; i < 6; i++) {
+          const levelNum = 6 - i;
           const colorClass = levelColors[i];
           
           // Menghitung Qty secara spesifik hanya untuk Level ini saja
