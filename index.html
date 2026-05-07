@@ -186,7 +186,7 @@
           <div><label class="block text-sm font-medium text-slate-700 mb-1">Row</label><input type="text" id="input-row" class="w-full px-4 py-2 border border-slate-200 rounded-lg"></div>
           <div><label class="block text-sm font-medium text-slate-700 mb-1">Level</label>
             <select id="input-level" class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-white">
-              <option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option><option value="5">Level 5</option>
+              <option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option><option value="5">Level 5</option><option value="6">Level 6</option>
             </select>
           </div>
         </div>
@@ -211,13 +211,14 @@
     // --- GANTI DENGAN URL DEPLOYMENT BARU ANDA (SETELAH UPDATE KODE.GS) ---
     const GAS_URL = "https://script.google.com/macros/s/AKfycbzbLEtCcp1s31HabjmWtX3gXhDWz8mkziwHKfb3J5Ip_3ITVHdDHBwsQIV-HoThqNc2/exec";
     
+    // Default disetel 6 level agar visual langsung siap
     let rackData = [
-      { title: 'Rack AA', percentage: 0, current: 0, total: 100 },
-      { title: 'Rack BB', percentage: 0, current: 0, total: 100 },
-      { title: 'Rack CC', percentage: 0, current: 0, total: 120 },
-      { title: 'Rack DD', percentage: 0, current: 0, total: 120 },
-      { title: 'Rack EE', percentage: 0, current: 0, total: 80 },
-      { title: 'Rack FF', percentage: 0, current: 0, total: 80 },
+      { title: 'Rack AA', percentage: 0, current: 0, total: 100, levels: 6 },
+      { title: 'Rack BB', percentage: 0, current: 0, total: 100, levels: 6 },
+      { title: 'Rack CC', percentage: 0, current: 0, total: 120, levels: 6 },
+      { title: 'Rack DD', percentage: 0, current: 0, total: 120, levels: 6 },
+      { title: 'Rack EE', percentage: 0, current: 0, total: 80, levels: 6 },
+      { title: 'Rack FF', percentage: 0, current: 0, total: 80, levels: 6 },
     ];
     let containerData = [];
 
@@ -370,16 +371,38 @@
 
     function renderRacks() {
       const container = document.getElementById('rack-container'); container.innerHTML = '';
-      const levelColors = ['bg-slate-400', 'bg-orange-500', 'bg-red-600', 'bg-green-700', 'bg-blue-700'];
+      
+      // Menerapkan warna persis sesuai PDF yang diunggah
+      const colorMap = {
+        10: 'bg-[#4bc0d9]', 
+        9: 'bg-[#4bc0d9]',   
+        8: 'bg-[#4bc0d9]',   
+        7: 'bg-[#4bc0d9]',     
+        6: 'bg-[#4bc0d9]',    // Level 6 (Cyan/Biru Muda)
+        5: 'bg-[#8c8c8c]',    // Level 5 (Abu-abu)
+        4: 'bg-[#ff9900]',    // Level 4 (Oranye)
+        3: 'bg-[#ff0000]',    // Level 3 (Merah)
+        2: 'bg-[#38761d]',    // Level 2 (Hijau)
+        1: 'bg-[#0000ff]'     // Level 1 (Biru Tua)
+      };
+
       rackData.forEach(rack => {
         let barsHtml = '';
         let badgeColor = rack.percentage >= 90 ? 'bg-red-100 text-red-700' : rack.percentage >= 60 ? 'bg-amber-100 text-amber-700' : rack.percentage === 0 ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700';
-        for (let i = 0; i < 5; i++) {
-          const levelNum = 5 - i; const colorClass = levelColors[i];
-          const fillPercentage = (Math.max(0, Math.min(rack.total/5, rack.current - (levelNum - 1) * (rack.total/5))) / (rack.total/5)) * 100;
-          barsHtml += `<div class="flex items-center gap-3 mb-2 last:mb-0"><div class="w-7 h-7 flex items-center justify-center text-sm font-bold text-white rounded ${colorClass}">${levelNum}</div><div class="h-4 w-full bg-slate-200 rounded-sm relative overflow-hidden"><div class="h-full ${colorClass}" style="width: ${fillPercentage}%"></div></div></div>`;
+        
+        // Memaksa 6 level (atau mengikuti data Spreadsheet jika dinamis)
+        const maxLevel = Number(rack.levels) || 6; 
+        const palletsPerLevel = rack.total / maxLevel;
+
+        for (let i = 0; i < maxLevel; i++) {
+          const levelNum = maxLevel - i; 
+          const colorClass = colorMap[levelNum] || 'bg-slate-500';
+          
+          const fillPercentage = (Math.max(0, Math.min(palletsPerLevel, rack.current - (levelNum - 1) * palletsPerLevel)) / palletsPerLevel) * 100;
+          barsHtml += `<div class="flex items-center gap-3 mb-2 last:mb-0"><div class="w-7 h-7 flex items-center justify-center text-sm font-bold text-white rounded shadow-sm ${colorClass}">${levelNum}</div><div class="h-4 w-full bg-slate-200 rounded-sm relative overflow-hidden shadow-inner"><div class="h-full ${colorClass} transition-all duration-1000 ease-out" style="width: ${fillPercentage}%"></div></div></div>`;
         }
-        container.innerHTML += `<div class="border border-slate-200 rounded-xl bg-white"><div class="p-5 border-b border-slate-100 flex justify-between items-start"><div><h3 class="font-bold text-lg">${rack.title}</h3><span class="inline-block px-2 rounded text-xs font-bold ${badgeColor}">${rack.percentage}% TERISI</span></div><div class="text-right text-sm font-bold">${rack.current} / ${rack.total}</div></div><div class="p-5 bg-slate-50">${barsHtml}</div></div>`;
+        
+        container.innerHTML += `<div class="border border-slate-200 rounded-xl bg-white flex flex-col justify-between hover:shadow-md transition-all"><div class="p-5 border-b border-slate-100 flex justify-between items-start"><div><h3 class="font-bold text-lg text-slate-800">${rack.title}</h3><span class="inline-block px-2 rounded text-xs font-bold mt-1 ${badgeColor}">${rack.percentage}% TERISI</span></div><div class="text-right"><div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Kapasitas</div><div class="text-sm font-bold text-slate-700"><span class="text-slate-900">${rack.current}</span> / ${rack.total}</div></div></div><div class="p-5 bg-slate-50 rounded-b-xl flex-1 flex flex-col justify-end">${barsHtml}</div></div>`;
       });
     }
 
@@ -408,7 +431,7 @@
                     percentage: 0,
                     current: 0,
                     total: parseInt(r.total) || 100,
-                    levels: parseInt(r.levels) || 5
+                    levels: parseInt(r.levels) || 6 // Memaksa update ke 6 jika dinamis dari Sheet 2
                 }));
                 populateRackOptions(); 
             }
