@@ -96,12 +96,12 @@
       </div>
 
       <!-- Header -->
-      <div class="flex justify-between items-center mb-8">
+      <div class="flex justify-between items-start md:items-center mb-8 flex-col sm:flex-row gap-4">
         <div>
           <h1 id="page-title" class="text-3xl font-black text-slate-900 mb-1 tracking-tight">Warehouse Dashboard</h1>
           <p class="text-slate-500 font-medium text-sm hidden md:block">Monitoring layout gudang dan utilisasi racking secara real-time</p>
         </div>
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-3 self-end sm:self-auto">
           <!-- Tombol Input Location -->
           <button onclick="openModal()" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-xl shadow-md text-sm font-medium flex items-center gap-2 transition-all">
             <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
@@ -198,18 +198,23 @@
         <div class="bg-slate-50 p-4 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Rack</label>
-            <select id="input-rak" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
+            <!-- Default dibuat Kosong (Blank) dan Wajib diisi (Required) -->
+            <select id="input-rak" required class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
+              <option value="" disabled selected></option>
               <option value="Rack AA">Rack AA</option><option value="Rack BB">Rack BB</option><option value="Rack CC">Rack CC</option>
               <option value="Rack DD">Rack DD</option><option value="Rack EE">Rack EE</option><option value="Rack FF">Rack FF</option>
             </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Row</label>
-            <input type="text" id="input-row" placeholder="001" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
+            <!-- Default dibuat Kosong tanpa placeholder -->
+            <input type="text" id="input-row" required class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Level</label>
-            <select id="input-level" class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
+            <!-- Default dibuat Kosong (Blank) dan Wajib diisi (Required) -->
+            <select id="input-level" required class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
+              <option value="" disabled selected></option>
               <option value="5">Level 5</option><option value="4">Level 4</option><option value="3">Level 3</option><option value="2">Level 2</option><option value="1">Level 1</option>
             </select>
           </div>
@@ -238,7 +243,7 @@
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
-            <input type="date" id="input-tanggal" class="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none">
+            <input type="date" id="input-tanggal" required class="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none">
           </div>
         </div>
 
@@ -282,24 +287,24 @@
 
     // --- FUNGSI PARSING LOKASI RAK ---
     function parseLocationData(qrText) {
-      // Format yang didukung: AA.001.3
+      // Memecah format QR: AA.001.4 menjadi array [AA, 001, 4]
       let parts = qrText.split(/[\.\-\,]/).map(s => s.trim());
       
       if (parts.length >= 3) {
-        let rackCode = parts[0].toUpperCase(); // "AA"
-        let rowCode = parts[1];                // "001"
-        let levelCode = parts[2];              // "3"
+        let rackCode = parts[0].toUpperCase(); // misal "AA"
+        let rowCode = parts[1];                // misal "001"
+        let levelCode = parts[2];              // misal "4"
 
-        // Tambahkan kata 'Rack ' jika belum ada (misal dari "AA" menjadi "Rack AA")
+        // Tambahkan awalan 'Rack ' jika belum ada (misal dari "AA" menjadi "Rack AA")
         if (!rackCode.startsWith('RACK')) rackCode = 'Rack ' + rackCode;
 
-        // Auto Select: RACK
+        // Auto Select ke kolom RACK
         let rakSelect = document.getElementById('input-rak');
         let rackOption = Array.from(rakSelect.options).find(opt => opt.value.toUpperCase() === rackCode.toUpperCase());
         if (rackOption) {
           rakSelect.value = rackOption.value;
         } else {
-          // Jika rak belum ada di list default, tambahkan otomatis
+          // Jika rak kode baru, tambahkan option otomatis
           const newOpt = document.createElement('option'); 
           newOpt.value = rackCode; 
           newOpt.textContent = rackCode; 
@@ -307,10 +312,10 @@
           rakSelect.value = rackCode;
         }
 
-        // Auto Select: ROW
+        // Auto Select ke kolom ROW
         document.getElementById('input-row').value = rowCode;
 
-        // Auto Select: LEVEL
+        // Auto Select ke kolom LEVEL
         let levelSelect = document.getElementById('input-level');
         let levelOption = Array.from(levelSelect.options).find(opt => opt.value === levelCode);
         if (levelOption) {
@@ -578,8 +583,17 @@
       document.getElementById('mobile-overlay').classList.toggle('hidden');
     }
 
-    function openModal() { document.getElementById('input-modal').classList.remove('hidden'); document.getElementById('input-tanggal').valueAsDate = new Date(); }
-    function closeModal() { document.getElementById('input-modal').classList.add('hidden'); document.getElementById('form-container').reset(); }
+    function openModal() { 
+      // Mereset formulir terlebih dahulu agar blank
+      document.getElementById('form-container').reset(); 
+      document.getElementById('input-modal').classList.remove('hidden'); 
+      document.getElementById('input-tanggal').valueAsDate = new Date(); 
+    }
+    
+    function closeModal() { 
+      document.getElementById('input-modal').classList.add('hidden'); 
+      document.getElementById('form-container').reset(); 
+    }
 
     window.onload = loadData;
   </script>
