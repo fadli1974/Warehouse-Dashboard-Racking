@@ -128,13 +128,17 @@
             <div class="text-xs font-medium text-slate-500 mb-1">Total Rack</div>
             <div id="summary-total-rack" class="font-bold text-2xl text-slate-800">-</div>
           </div>
-          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[200px]">
-            <div class="text-xs font-medium text-slate-500 mb-1">Utilisasi Keseluruhan</div>
-            <div id="summary-utilization" class="font-bold text-2xl text-slate-800">0%</div>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px]">
+            <div class="text-xs font-medium text-slate-500 mb-1">Pallet Terpakai</div>
+            <div id="summary-used-pallet" class="font-bold text-2xl text-slate-800">- <span class="text-sm font-medium text-slate-500">pallet</span></div>
           </div>
           <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[160px] flex-1 max-w-[220px]">
             <div class="text-xs font-medium text-slate-500 mb-1">Available Space</div>
             <div id="summary-available" class="font-bold text-2xl text-slate-800">- <span class="text-sm font-medium text-slate-500">pallet</span></div>
+          </div>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px]">
+            <div class="text-xs font-medium text-slate-500 mb-1">Utilisasi Keseluruhan</div>
+            <div id="summary-utilization" class="font-bold text-2xl text-slate-800">0%</div>
           </div>
         </div>
 
@@ -153,7 +157,7 @@
         <!-- Layout Gudang Section -->
         <div id="section-layout" class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm">
           <div class="flex justify-between items-center mb-6">
-            <h2 class="font-bold text-xl text-slate-800">Visualisasi Rak</h2>
+            <h2 class="font-bold text-xl text-slate-800">Visual Racking</h2>
           </div>
           <!-- Grid dibentangkan lebih luas hingga 5 kolom di monitor besar -->
           <div id="rack-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6"></div>
@@ -454,6 +458,7 @@
       });
       
       document.getElementById('summary-total-rack').innerText = rackData.length;
+      document.getElementById('summary-used-pallet').innerHTML = `${totalFilledSlots} <span class="text-sm font-medium text-slate-500">pallet</span>`;
       document.getElementById('summary-utilization').innerText = totalCap > 0 ? `${Math.round((totalFilledSlots / totalCap) * 100)}%` : '0%';
       document.getElementById('summary-available').innerHTML = `${totalCap - totalFilledSlots} <span class="text-sm font-medium text-slate-500">pallet</span>`;
     }
