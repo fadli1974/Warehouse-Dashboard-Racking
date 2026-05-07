@@ -276,15 +276,15 @@
       setTimeout(()=> t.classList.add('-translate-y-24', 'opacity-0'), 3500);
     }
 
-    // --- FUNGSI AMBIL DATA ---
+    // --- FUNGSI AMBIL DATA (Ditambahkan Anti-Cache) ---
     async function loadData() {
-      // Tampilkan UI kosong dulu agar tidak blank
       renderRacks();
       renderTable();
       renderSummary();
 
       try {
-        const response = await fetch(GAS_URL);
+        const urlToFetch = GAS_URL + "?t=" + Date.now();
+        const response = await fetch(urlToFetch);
         const data = await response.json();
         containerData = data || [];
         
@@ -340,7 +340,6 @@
       ];
 
       rackConfig.forEach(rack => {
-        // Hitung utilisasi
         const currentQty = containerData.filter(d => d.rack === rack.id).reduce((sum, item) => {
           return item.jenis === 'Masuk' ? sum + Number(item.qty) : sum - Number(item.qty);
         }, 0);
@@ -407,7 +406,7 @@
 
       try {
         // MENGGUNAKAN METODE GET UNTUK BYPASS BLOKIRAN BROWSER 100%
-        const urlToFetch = GAS_URL + "?action=insert&data=" + encodeURIComponent(JSON.stringify(payload));
+        const urlToFetch = GAS_URL + "?action=insert&t=" + Date.now() + "&data=" + encodeURIComponent(JSON.stringify(payload));
         const res = await fetch(urlToFetch);
         const result = await res.json();
         
@@ -418,10 +417,10 @@
           containerData.unshift(payload);
           renderTable(); renderRacks(); renderSummary();
         } else {
-          showToast("✖ Error dari Google: " + result.message, "error");
+          showToast("✖ GAGAL: " + result.message, "error");
         }
       } catch (error) {
-        showToast("✖ GAGAL: Terjadi blokiran jaringan/CORS.", "error");
+        showToast("✖ GAGAL MENGIRIM! Periksa koneksi internet.", "error");
         console.error("Save Error:", error);
       } finally {
         btn.innerText = originalText;
@@ -465,7 +464,7 @@
       const secContainer = document.getElementById('section-container');
       const title = document.getElementById('page-title');
       const btnDashboard = document.getElementById('menu-dashboard');
-      const btnWarehouse = document.getElementById('menu-layout-rack'); // Using index 1 id
+      const btnWarehouse = document.getElementById('menu-layout-rack'); 
       const btnManagement = document.getElementById('menu-warehouse-management');
 
       if(menu === 'Dashboard') {
