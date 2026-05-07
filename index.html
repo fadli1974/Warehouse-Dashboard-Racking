@@ -407,7 +407,14 @@
         for (let i = 0; i < 5; i++) {
           const levelNum = 5 - i;
           const colorClass = levelColors[i];
-          const filledInLevel = Math.max(0, Math.min(palletsPerLevel, currentQty - (levelNum - 1) * palletsPerLevel));
+          
+          // PERBAIKAN: Menghitung Qty secara spesifik hanya untuk Level ini saja
+          const levelQty = containerData.filter(d => d.rack === rack.id && Number(d.level) === levelNum).reduce((sum, item) => {
+            return item.jenis === 'Masuk' ? sum + Number(item.qty) : sum - Number(item.qty);
+          }, 0);
+
+          // Mengisi baris berdasarkan Qty di Level tersebut
+          const filledInLevel = Math.max(0, Math.min(palletsPerLevel, levelQty));
           const fillPercentage = (filledInLevel / palletsPerLevel) * 100;
           
           barsHtml += `
