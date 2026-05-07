@@ -68,7 +68,7 @@
               <div class="absolute bottom-0 right-0 w-12 h-12 border-b-8 border-r-8 border-blue-500 rounded-br-[1.5rem] pointer-events-none z-20"></div>
               <div class="absolute left-0 right-0 h-1 bg-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,1)] animate-scan-line pointer-events-none z-30"></div>
           </div>
-          <div id="scan-error" class="text-center text-red-400 text-xs font-bold px-4 h-12"></div>
+          <div id="scan-error" class="text-center text-rose-500 text-xs font-bold px-4 h-12"></div>
       </div>
   </div>
 
@@ -438,13 +438,37 @@
     window.startScan = (target) => {
       document.getElementById('scanner-screen').classList.remove('hidden');
       document.getElementById('reader').innerHTML = '';
+      document.getElementById('scan-error').innerText = ''; // Reset pesan error sebelumnya
+      
+      // Ganti subtitle agar user tahu sedang scan apa
+      const subtitle = document.getElementById('scanner-subtitle');
+      if (subtitle) {
+        subtitle.innerText = target === 'licence' ? 'SCAN LICENCE PLATE (LP-...)' : 'SCAN LOKASI RAK';
+      }
+
       setTimeout(() => {
         html5QrCode = new Html5Qrcode("reader");
         html5QrCode.start(
           { facingMode: "environment" }, 
           { fps: 15, qrbox: 250 }, 
           (text) => {
-            document.getElementById(`input-${target}`).value = text;
+            const scannedText = text.trim();
+            const isLicencePlate = scannedText.toUpperCase().startsWith('LP-');
+
+            // 1. Validasi saat scan Licence Plate (Harus awalan LP-)
+            if (target === 'licence' && !isLicencePlate) {
+              document.getElementById('scan-error').innerText = "✖ SALAH INPUT! QR bukan Licence Plate (Harus awalan LP-)";
+              return; // Jangan ditutup kameranya, biarkan user coba lagi
+            }
+
+            // 2. Validasi saat scan Location (TIDAK BOLEH awalan LP-)
+            if (target === 'location' && isLicencePlate) {
+              document.getElementById('scan-error').innerText = "✖ SALAH INPUT! Ini QR Licence Plate, harap scan QR Lokasi.";
+              return; // Jangan ditutup kameranya, biarkan user coba lagi
+            }
+
+            // Jika lolos validasi, masukkan ke input form
+            document.getElementById(`input-${target}`).value = scannedText;
             window.closeScanner();
             showToast("✔ Berhasil memindai!", "success");
             playBeep();
