@@ -154,8 +154,10 @@
                 <th class="py-4 px-5 font-semibold text-slate-700">Location</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Licence Plate</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Rack</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Row</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Qty</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Jenis</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Tanggal</th>
                 <th class="py-4 px-5 font-semibold text-slate-700">Status</th>
               </tr>
             </thead>
@@ -366,7 +368,8 @@
 
     function renderTable() {
       const body = document.getElementById('table-body');
-      body.innerHTML = containerData.length === 0 ? '<tr><td colspan="6" class="p-8 text-center text-slate-400">Belum ada data.</td></tr>' : '';
+      // Kolom span diubah menjadi 8 menyesuaikan jumlah kolom header
+      body.innerHTML = containerData.length === 0 ? '<tr><td colspan="8" class="p-8 text-center text-slate-400">Belum ada data.</td></tr>' : '';
       containerData.forEach(d => {
         const statusColor = d.status === 'Received' ? 'text-emerald-700 bg-emerald-50' : d.status === 'Dispatched' ? 'text-blue-700 bg-blue-50' : 'text-amber-700 bg-amber-50';
         body.innerHTML += `
@@ -374,8 +377,10 @@
             <td class="py-4 px-5 font-semibold text-slate-900">${d.location || '-'}</td>
             <td class="py-4 px-5 text-slate-600">${d.licencePlate || '-'}</td>
             <td class="py-4 px-5 text-slate-600">${d.rack || '-'}</td>
+            <td class="py-4 px-5 text-slate-600 font-medium">${d.row || '-'}</td>
             <td class="py-4 px-5 text-blue-600 font-bold">${d.qty || '0'}</td>
             <td class="py-4 px-5 text-slate-600">${d.jenis || '-'}</td>
+            <td class="py-4 px-5 text-slate-600">${d.tanggal || '-'}</td>
             <td class="py-4 px-5"><span class="px-3 py-1.5 rounded-md border text-xs font-semibold ${statusColor}">${d.status || 'Pending'}</span></td>
           </tr>`;
       });
