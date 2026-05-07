@@ -19,6 +19,10 @@
     @keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
     .animate-scan-line { animation: scan 2.5s linear infinite; }
     
+    /* Menyembunyikan scrollbar untuk Summary di Mobile */
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+
     /* Perbaikan Video Scanner */
     #reader {
       width: 100%;
@@ -95,50 +99,52 @@
         <p class="text-slate-500 font-bold animate-pulse tracking-widest mt-2 text-sm uppercase">Memuat Data...</p>
       </div>
 
-      <!-- Header -->
-      <div class="flex justify-between items-start md:items-center mb-8 flex-col sm:flex-row gap-4">
-        <div>
-          <h1 id="page-title" class="text-3xl font-black text-slate-900 mb-1 tracking-tight">Warehouse Dashboard</h1>
-          <p class="text-slate-500 font-medium text-sm hidden md:block">Monitoring layout gudang dan utilisasi racking secara real-time</p>
+      <!-- Header & Horizontal Summary (Dipindah ke atas) -->
+      <div class="flex flex-col xl:flex-row justify-between items-start xl:items-end mb-8 gap-6">
+        
+        <!-- Judul & Tombol Kiri -->
+        <div class="flex flex-col gap-4">
+          <div>
+            <h1 id="page-title" class="text-3xl font-black text-slate-900 mb-1 tracking-tight">Warehouse Dashboard</h1>
+            <p class="text-slate-500 font-medium text-sm hidden md:block">Monitoring layout gudang dan utilisasi racking secara real-time</p>
+          </div>
+          <div class="flex items-center gap-3">
+            <button onclick="openModal()" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-xl shadow-md text-sm font-medium flex items-center gap-2 transition-all">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
+              Input Location
+            </button>
+            <button onclick="toggleSidebar()" class="md:hidden p-2.5 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-600 hover:bg-slate-50">
+              <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+          </div>
         </div>
-        <div class="flex items-center gap-3 self-end sm:self-auto">
-          <!-- Tombol Input Location -->
-          <button onclick="openModal()" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-xl shadow-md text-sm font-medium flex items-center gap-2 transition-all">
-            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
-            Input Location
-          </button>
-          <!-- Tombol Menu Mobile -->
-          <button onclick="toggleSidebar()" class="md:hidden p-2.5 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-600 hover:bg-slate-50">
-            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
-          </button>
+
+        <!-- Summary Pindah Kesini (Sebelah Kanan/Horizontal) -->
+        <div class="flex gap-4 w-full xl:w-auto overflow-x-auto hide-scrollbar pb-2 xl:pb-0">
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-5 min-w-[130px] flex-1">
+            <div class="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Total Rack</div>
+            <div id="summary-total-rack" class="font-black text-2xl text-slate-800">-</div>
+          </div>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-5 min-w-[130px] flex-1">
+            <div class="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Utilisasi</div>
+            <div id="summary-utilization" class="font-black text-2xl text-slate-800">0%</div>
+          </div>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-5 min-w-[160px] flex-1">
+            <div class="text-xs font-bold text-slate-400 mb-1 uppercase tracking-wider">Available Space</div>
+            <div id="summary-available" class="font-black text-2xl text-slate-800">- <span class="text-sm font-medium text-slate-500">pallet</span></div>
+          </div>
         </div>
+
       </div>
 
-      <!-- Section: Visualisasi Rak & Summary -->
-      <div id="section-layout" class="flex flex-col lg:flex-row gap-6 mb-8">
-        <div class="flex-1 bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm">
+      <!-- Section: Visualisasi Rak (Sekarang Full Width / Luas) -->
+      <div id="section-layout" class="mb-8">
+        <div class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm">
           <div class="flex justify-between items-center mb-6">
             <h2 class="font-bold text-xl text-slate-800">Visualisasi Rak</h2>
           </div>
-          <!-- Grid Rak -->
-          <div id="rack-container" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6"></div>
-        </div>
-        
-        <!-- Summary Kanan -->
-        <div class="w-full lg:w-[320px] bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm h-fit shrink-0">
-          <h2 class="font-bold text-xl text-slate-800 mb-6">Summary</h2>
-          <div class="bg-slate-50/80 border border-slate-100 rounded-xl p-5 mb-4">
-            <div class="text-sm font-medium text-slate-500">Total Rack</div>
-            <div id="summary-total-rack" class="font-bold text-2xl text-slate-800">-</div>
-          </div>
-          <div class="bg-slate-50/80 border border-slate-100 rounded-xl p-5 mb-4">
-            <div class="text-sm font-medium text-slate-500">Utilisasi Keseluruhan</div>
-            <div id="summary-utilization" class="font-bold text-2xl text-slate-800">0%</div>
-          </div>
-          <div class="bg-slate-50/80 border border-slate-100 rounded-xl p-5">
-            <div class="text-sm font-medium text-slate-500">Available Space</div>
-            <div id="summary-available" class="font-bold text-2xl text-slate-800">- <span class="text-base font-medium text-slate-500">pallet</span></div>
-          </div>
+          <!-- Grid Rak dibentangkan penuh ke samping -->
+          <div id="rack-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6"></div>
         </div>
       </div>
 
@@ -392,7 +398,7 @@
       });
       document.getElementById('summary-total-rack').innerText = rackConfig.length;
       document.getElementById('summary-utilization').innerText = totalCap > 0 ? `${Math.round((totalCur / totalCap) * 100)}%` : '0%';
-      document.getElementById('summary-available').innerHTML = `${totalCap - totalCur} <span class="text-base font-medium text-slate-500">pallet</span>`;
+      document.getElementById('summary-available').innerHTML = `${totalCap - totalCur} <span class="text-sm font-medium text-slate-500">pallet</span>`;
     }
 
     function renderTable() {
@@ -442,7 +448,7 @@
         let badgeColor = usagePercentage > 85 ? 'bg-red-100 text-red-700' : usagePercentage > 50 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
 
         let barsHtml = '';
-        // Jumlah tumpukan digambar dinamis sesuai data Sheet 2 (misal Rak AA 4 Level, AD 6 Level)
+        // Jumlah tumpukan digambar dinamis sesuai data Sheet 2
         for (let i = 0; i < rack.levels; i++) {
           const levelNum = rack.levels - i; 
           const colorClass = colorMap[levelNum];
