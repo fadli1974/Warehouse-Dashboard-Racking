@@ -115,7 +115,8 @@
           </div>
         </div>
 
-        <div class="flex gap-4 w-full xl:w-auto overflow-x-auto hide-scrollbar flex-1 justify-start xl:justify-center px-1 py-1">
+        <!-- SUMMARY UNTUK DASHBOARD (LOCKED) -->
+        <div id="dashboard-summary" class="flex gap-4 w-full xl:w-auto overflow-x-auto hide-scrollbar flex-1 justify-start xl:justify-center px-1 py-1 transition-all">
           <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[200px]">
             <div class="text-xs font-medium text-slate-500 mb-1">Total Rack</div>
             <div id="summary-total-rack" class="font-bold text-2xl text-slate-800">-</div>
@@ -131,6 +132,26 @@
           <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px]">
             <div class="text-xs font-medium text-slate-500 mb-1">Utilisasi Keseluruhan</div>
             <div id="summary-utilization" class="font-bold text-2xl text-slate-800">0%</div>
+          </div>
+        </div>
+
+        <!-- SUMMARY KHUSUS UNTUK MENU REPORT -->
+        <div id="report-summary" class="hidden gap-4 w-full xl:w-auto overflow-x-auto hide-scrollbar flex-1 justify-start xl:justify-center px-1 py-1 transition-all">
+          <button onclick="showToast('Fitur Download Template sedang diproses', 'info')" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[200px] text-left hover:bg-slate-50 hover:border-blue-300 transition-colors focus:outline-none">
+            <div class="text-xs font-medium text-slate-500 mb-1">Format Standar</div>
+            <div class="font-bold text-xl text-slate-800">Template</div>
+          </button>
+          <button onclick="showToast('Fitur Upload sedang diproses', 'info')" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px] text-left hover:bg-slate-50 hover:border-emerald-300 transition-colors focus:outline-none">
+            <div class="text-xs font-medium text-slate-500 mb-1">Import Excel/CSV</div>
+            <div class="font-bold text-xl text-slate-800">Upload Data</div>
+          </button>
+          <button onclick="showToast('Fitur Export sedang diproses', 'info')" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[160px] flex-1 max-w-[220px] text-left hover:bg-slate-50 hover:border-amber-300 transition-colors focus:outline-none">
+            <div class="text-xs font-medium text-slate-500 mb-1">Export Excel/CSV</div>
+            <div class="font-bold text-xl text-slate-800">Download Data</div>
+          </button>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px]">
+            <div class="text-xs font-medium text-slate-500 mb-1">Utilisasi Keseluruhan</div>
+            <div id="summary-utilization-report" class="font-bold text-2xl text-slate-800">0%</div>
           </div>
         </div>
 
@@ -448,22 +469,34 @@
       const secLayout = document.getElementById('section-layout');
       const secContainer = document.getElementById('section-container');
       const secReport = document.getElementById('section-report');
+      
+      const dashboardSummary = document.getElementById('dashboard-summary');
+      const reportSummary = document.getElementById('report-summary');
 
+      // Hide all content sections initially
       secLayout.classList.add('hidden'); 
       secContainer.classList.add('hidden'); 
       if(secReport) secReport.classList.add('hidden');
 
+      // Hide all summary sections initially
+      if(dashboardSummary) { dashboardSummary.classList.add('hidden'); dashboardSummary.classList.remove('flex'); }
+      if(reportSummary) { reportSummary.classList.add('hidden'); reportSummary.classList.remove('flex'); }
+
       if (selectedMenu === 'Dashboard') {
         secLayout.classList.remove('hidden'); secContainer.classList.remove('hidden');
+        if(dashboardSummary) { dashboardSummary.classList.remove('hidden'); dashboardSummary.classList.add('flex'); }
         pageTitle.innerText = 'Warehouse Dashboard';
       } else if (selectedMenu === 'Layout Rack') {
         secLayout.classList.remove('hidden'); 
+        if(dashboardSummary) { dashboardSummary.classList.remove('hidden'); dashboardSummary.classList.add('flex'); }
         pageTitle.innerText = 'Layout Rack';
       } else if (selectedMenu === 'Warehouse Management') {
         secContainer.classList.remove('hidden');
+        if(dashboardSummary) { dashboardSummary.classList.remove('hidden'); dashboardSummary.classList.add('flex'); }
         pageTitle.innerText = 'Warehouse Management';
       } else if (selectedMenu === 'Report') {
         if(secReport) secReport.classList.remove('hidden');
+        if(reportSummary) { reportSummary.classList.remove('hidden'); reportSummary.classList.add('flex'); }
         pageTitle.innerText = 'Report';
       }
 
@@ -497,9 +530,16 @@
         totalFilledSlots += rackFilled;
       });
       
+      // Update Original Summary
       document.getElementById('summary-total-rack').innerText = rackData.length;
       document.getElementById('summary-used-pallet').innerHTML = `${totalFilledSlots} <span class="text-sm font-medium text-slate-500">pallet</span>`;
-      document.getElementById('summary-utilization').innerText = totalCap > 0 ? `${Math.round((totalFilledSlots / totalCap) * 100)}%` : '0%';
+      
+      // Update Utilization on both summaries
+      const utilText = totalCap > 0 ? `${Math.round((totalFilledSlots / totalCap) * 100)}%` : '0%';
+      document.getElementById('summary-utilization').innerText = utilText;
+      const utilReport = document.getElementById('summary-utilization-report');
+      if (utilReport) utilReport.innerText = utilText;
+      
       document.getElementById('summary-available').innerHTML = `${totalCap - totalFilledSlots} <span class="text-sm font-medium text-slate-500">pallet</span>`;
     }
 
