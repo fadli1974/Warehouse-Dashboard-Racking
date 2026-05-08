@@ -247,18 +247,18 @@
         <div class="bg-slate-50 p-4 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Rack</label>
-            <select id="input-rak" required class="w-full bg-slate-200 text-slate-500 border border-slate-200 rounded-lg px-4 py-2 pointer-events-none appearance-none" tabindex="-1">
+            <select id="input-rak" class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-200 text-slate-500 pointer-events-none appearance-none" tabindex="-1">
               <option value="" disabled selected>Pilih Rak...</option>
             </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Row</label>
-            <input type="text" id="input-row" required readonly class="w-full bg-slate-200 text-slate-500 border border-slate-200 rounded-lg px-4 py-2 focus:outline-none cursor-not-allowed">
+            <input type="text" id="input-row" required readonly class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-200 text-slate-500 focus:outline-none cursor-not-allowed">
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Level</label>
-            <select id="input-level" required class="w-full bg-slate-200 text-slate-500 border border-slate-200 rounded-lg px-4 py-2 pointer-events-none appearance-none" tabindex="-1">
-              <option value="" disabled selected>Pilih Level...</option>
+            <select id="input-level" class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-200 text-slate-500 pointer-events-none appearance-none" tabindex="-1">
+              <option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option><option value="5">Level 5</option><option value="6">Level 6</option>
             </select>
           </div>
         </div>
@@ -300,11 +300,19 @@
   </div>
 
   <script>
-    // URL Web App GAS Anda - PASTIKAN MENGGUNAKAN VERSI TERBARU (V36+)
+    // URL Web App GAS Anda - PASTIKAN MENGGUNAKAN VERSI TERBARU
     const GAS_URL = "https://script.google.com/macros/s/AKfycbznaOvcN4Q96TVJGQtTNYBV8Bt-GzFoLg-sZxSaAfvNB6cVX-U1b-E8VZnqLrl9667H/exec";
     
+    // Default Rack Data (Terkunci Sempurna)
+    let rackData = [
+      { title: 'Rack AA', total: 100, levels: 6 },
+      { title: 'Rack BB', total: 100, levels: 6 },
+      { title: 'Rack CC', total: 120, levels: 6 },
+      { title: 'Rack DD', total: 120, levels: 6 },
+      { title: 'Rack EE', total: 80, levels: 6 },
+      { title: 'Rack FF', total: 80, levels: 6 },
+    ];
     let containerData = [];
-    let rackConfig = []; 
 
     function playBeep() {
       try {
@@ -317,98 +325,115 @@
       } catch (e) {}
     }
 
-    function showToast(msg, type='success') {
-      const t = document.getElementById('toast-notification');
-      document.getElementById('toast-message').innerText = msg;
-      t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 ${type==='success' ? 'bg-emerald-600' : type==='info' ? 'bg-blue-600' : 'bg-red-600'}`;
-      t.classList.remove('-translate-y-24', 'opacity-0');
-      setTimeout(()=> t.classList.add('-translate-y-24', 'opacity-0'), 3500);
+    // Variabel untuk mengamankan timeout notifikasi agar tidak bentrok
+    let toastTimeout;
+    function showToast(message, type = 'success') {
+      const toast = document.getElementById('toast-notification');
+      document.getElementById('toast-message').innerText = message;
+      
+      let bgColorClass = 'bg-emerald-600'; 
+      if (type === 'error') bgColorClass = 'bg-red-600';
+      else if (type === 'info') bgColorClass = 'bg-blue-600'; 
+
+      toast.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 ${bgColorClass}`;
+      toast.classList.remove('-translate-y-24', 'opacity-0');
+      
+      if (toastTimeout) clearTimeout(toastTimeout);
+      toastTimeout = setTimeout(() => { 
+        toast.classList.add('-translate-y-24', 'opacity-0'); 
+      }, 4000);
     }
 
-    // --- MENGISI DROPDOWN RAK & LEVEL OTOMATIS SESUAI SHEET 2 ---
-    function populateRackOptions() {
-      const rakSelect = document.getElementById('input-rak');
-      const currentVal = rakSelect.value;
-      rakSelect.innerHTML = '<option value="" disabled selected>Pilih Rak...</option>';
-      
-      rackConfig.forEach(rack => {
-        const opt = document.createElement('option');
-        opt.value = rack.id;
-        opt.textContent = rack.id;
-        rakSelect.appendChild(opt);
-      });
-      if(currentVal) rakSelect.value = currentVal;
+    // --- HTML5-QRCode LIVE SCANNER ---
+    let html5QrCode = null;
+    let currentScanTarget = '';
+
+    window.startScan = function(target) {
+        currentScanTarget = target;
+        const errorElement = document.getElementById('scan-error');
+        errorElement.innerHTML = '';
+        
+        const scannerScreen = document.getElementById('scanner-screen');
+        scannerScreen.classList.remove('hidden');
+        scannerScreen.style.display = 'flex';
+        
+        const subtitle = document.getElementById('scanner-subtitle');
+        if (subtitle) {
+          subtitle.innerText = target === 'licence' ? 'SCAN LICENCE PLATE (LP-...)' : 'SCAN LOKASI RAK';
+        }
+
+        setTimeout(() => {
+            document.getElementById('reader').innerHTML = '';
+
+            if (!html5QrCode) {
+                html5QrCode = new window.Html5Qrcode("reader");
+            }
+
+            const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
+            
+            const onSuccess = (decodedText) => {
+                const scannedText = decodedText.trim();
+                const isLicencePlate = scannedText.toUpperCase().startsWith('LP-');
+
+                if (currentScanTarget === 'licence' && !isLicencePlate) {
+                  document.getElementById('scan-error').innerHTML = "✖ <b>DITOLAK!</b> Ini bukan QR Licence Plate (Wajib awalan LP-)";
+                  return; 
+                }
+
+                if (currentScanTarget === 'location' && isLicencePlate) {
+                  document.getElementById('scan-error').innerHTML = "✖ <b>DITOLAK!</b> Ini QR Licence Plate, harap scan QR Lokasi!";
+                  return; 
+                }
+
+                errorElement.innerHTML = '';
+                playBeep();
+                showToast(`Berhasil dipindai: ${scannedText}`, 'success');
+
+                const targetInputId = currentScanTarget === 'location' ? 'input-location' : 'input-licence';
+                document.getElementById(targetInputId).value = scannedText;
+
+                if (currentScanTarget === 'location') {
+                  parseLocationData(scannedText);
+                }
+                window.closeScanner();
+            };
+
+            html5QrCode.start({ facingMode: "environment" }, qrConfig, onSuccess, () => {})
+            .catch((err) => {
+                html5QrCode.start({ facingMode: "user" }, qrConfig, onSuccess, () => {})
+                .catch((err2) => {
+                    errorElement.innerHTML = "Akses kamera diblokir. Harap izinkan akses kamera di Browser Anda.";
+                });
+            });
+            
+        }, 300);
     }
 
-    function updateLevelDropdown() {
-      const rakSelect = document.getElementById('input-rak');
-      const levelSelect = document.getElementById('input-level');
-      const selectedRackId = rakSelect.value;
-      
-      const selectedRack = rackConfig.find(r => r.id === selectedRackId);
-      const maxLevel = selectedRack ? (Number(selectedRack.levels) || 6) : 6;
-      
-      const currentLevel = levelSelect.value;
-      levelSelect.innerHTML = '<option value="" disabled selected>Pilih Level...</option>';
-      
-      for (let i = maxLevel; i >= 1; i--) {
-          const opt = document.createElement('option');
-          opt.value = i;
-          opt.textContent = 'Level ' + i;
-          levelSelect.appendChild(opt);
-      }
-      
-      // Pertahankan pilihan sebelumnya jika masih valid di rak baru
-      if (currentLevel && Number(currentLevel) <= maxLevel) {
-          levelSelect.value = currentLevel;
-      }
-    }
+    window.closeScanner = () => {
+        if (html5QrCode) {
+            try {
+                html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(() => {});
+            } catch(e) {}
+        }
+        const scannerScreen = document.getElementById('scanner-screen');
+        scannerScreen.style.display = 'none';
+        scannerScreen.classList.add('hidden');
+    };
 
-    // Listener ketika Rak dipilih, maka jumlah Level menyesuaikan
-    document.getElementById('input-rak').addEventListener('change', updateLevelDropdown);
-
-    // --- FUNGSI PARSING LOKASI RAK ---
     function parseLocationData(qrText) {
       let parts = qrText.split(/[\.\-\,]/).map(s => s.trim());
-      
       if (parts.length >= 3) {
-        let rackCode = parts[0].toUpperCase(); 
-        let rowCode = parts[1];                
-        let levelCode = parts[2];              
+        let rackCode = parts[0]; let rowCode = parts[1]; let levelCode = parts[2];
+        if (!rackCode.toLowerCase().startsWith('rack')) rackCode = 'Rack ' + rackCode;
 
-        if (rackCode.startsWith('RACK ')) rackCode = rackCode.replace('RACK ', '');
-
-        // Auto Select Rak
         let rakSelect = document.getElementById('input-rak');
-        let rackOption = Array.from(rakSelect.options).find(opt => opt.value.toUpperCase() === rackCode.toUpperCase());
-        if (rackOption) {
-          rakSelect.value = rackOption.value;
-        } else {
-          const newOpt = document.createElement('option'); 
-          newOpt.value = rackCode; 
-          newOpt.textContent = rackCode; 
-          rakSelect.appendChild(newOpt); 
-          rakSelect.value = rackCode;
-        }
+        let optionFound = Array.from(rakSelect.options).some(opt => { if (opt.value.toUpperCase() === rackCode.toUpperCase()) { rakSelect.value = opt.value; return true; } return false; });
+        if (!optionFound) { const newOpt = document.createElement('option'); newOpt.value = rackCode; newOpt.textContent = rackCode; rakSelect.appendChild(newOpt); rakSelect.value = rackCode; }
 
-        // Auto Select Row
         document.getElementById('input-row').value = rowCode;
-
-        // Panggil updateLevelDropdown agar list opsi Level terbuat sebelum diset
-        updateLevelDropdown();
-
-        // Auto Select Level
         let levelSelect = document.getElementById('input-level');
-        let levelOption = Array.from(levelSelect.options).find(opt => opt.value === levelCode);
-        if (levelOption) {
-          levelSelect.value = levelOption.value;
-        } else {
-          const newOpt = document.createElement('option'); 
-          newOpt.value = levelCode; 
-          newOpt.textContent = 'Level ' + levelCode; 
-          levelSelect.appendChild(newOpt); 
-          levelSelect.value = levelCode;
-        }
+        let levelFound = Array.from(levelSelect.options).some(opt => { if (opt.value === levelCode) { levelSelect.value = opt.value; return true; } return false; });
+        if (!levelFound) { const newOpt = document.createElement('option'); newOpt.value = levelCode; newOpt.textContent = 'Level ' + levelCode; levelSelect.appendChild(newOpt); levelSelect.value = levelCode; }
       }
     }
 
@@ -424,314 +449,6 @@
       
       return `${day}-${month}-${year}`;
     }
-
-    // --- FUNGSI AMBIL DATA TRANSAKSI & CONFIG RAK SHEET 2 ---
-    async function loadData() {
-      try {
-        const urlToFetch = GAS_URL + "?t=" + Date.now();
-        const response = await fetch(urlToFetch);
-        const data = await response.json();
-        
-        // Membaca respon format baru yang menggabungkan 2 Sheet
-        if (data.transactions && data.rackConfigs) {
-            containerData = data.transactions || [];
-            if (data.rackConfigs.length > 0) {
-                rackConfig = data.rackConfigs; 
-                populateRackOptions(); 
-            }
-        } else {
-            containerData = data || [];
-        }
-        
-        renderRacks();
-        renderTable();
-        renderSummary();
-      } catch (err) {
-        console.error("Gagal load data:", err);
-      } finally {
-        document.getElementById('loading-overlay').classList.add('hidden');
-      }
-    }
-
-    // --- FITUR AUTO-SYNC BACKGROUND (MENGATASI DELAY PADA LAPTOP) ---
-    async function fetchDataSilently() {
-      try {
-        const urlToFetch = GAS_URL + "?t=" + Date.now();
-        const response = await fetch(urlToFetch);
-        const data = await response.json();
-        
-        if (data.transactions && data.rackConfigs) {
-            containerData = data.transactions || [];
-            if (data.rackConfigs.length > 0) {
-                rackConfig = data.rackConfigs; 
-            }
-        } else {
-            containerData = data || [];
-        }
-        
-        renderSummary();
-        renderRacks();
-        renderTable();
-        
-        // Tampilkan indikator "Live Sync Active" secara halus
-        const syncInd = document.getElementById('sync-indicator');
-        if(syncInd) {
-            syncInd.classList.remove('hidden');
-            setTimeout(() => syncInd.classList.add('hidden'), 2000);
-        }
-      } catch (err) {
-        console.error("Silent sync failed:", err);
-      }
-    }
-
-    function renderSummary() {
-      let totalCap = 0, totalCur = 0;
-      rackConfig.forEach(rack => { 
-        totalCap += Number(rack.total) || 0; 
-        const currentQty = containerData.filter(d => d.rack === rack.id).reduce((sum, item) => item.jenis === 'Masuk' ? sum + Number(item.qty) : sum - Number(item.qty), 0);
-        totalCur += currentQty; 
-      });
-      document.getElementById('summary-total-rack').innerText = rackConfig.length;
-      document.getElementById('summary-used-pallet').innerHTML = `${totalCur} <span class="text-xs font-medium text-slate-500">pallet</span>`;
-      document.getElementById('summary-utilization').innerText = totalCap > 0 ? `${Math.round((totalCur / totalCap) * 100)}%` : '0%';
-      document.getElementById('summary-available').innerHTML = `${totalCap - totalCur} <span class="text-xs font-medium text-slate-500">pallet</span>`;
-    }
-
-    function renderTable() {
-      const body = document.getElementById('table-body');
-      const reportBody = document.getElementById('report-table-body');
-      
-      body.innerHTML = '';
-      reportBody.innerHTML = '';
-
-      if (containerData.length === 0) {
-        body.innerHTML = '<tr><td colspan="9" class="p-8 text-center text-slate-400">Belum ada data.</td></tr>';
-        reportBody.innerHTML = '<tr><td colspan="10" class="p-8 text-center text-slate-400">Belum ada data.</td></tr>';
-        return;
-      }
-
-      containerData.forEach(d => {
-        const statusColor = d.status === 'Received' ? 'text-emerald-700 bg-emerald-50' : d.status === 'Dispatched' ? 'text-blue-700 bg-blue-50' : 'text-amber-700 bg-amber-50';
-        const formattedDate = formatDate(d.tanggal); 
-        const formattedRow = d.row ? String(d.row).padStart(3, '0') : '-';
-        const waktuInput = d.waktuInput ? d.waktuInput : '-';
-
-        const baseHTML = `
-            <td class="py-4 px-5 font-semibold text-slate-900">${d.location || '-'}</td>
-            <td class="py-4 px-5 text-slate-600">${d.licencePlate || '-'}</td>
-            <td class="py-4 px-5 text-slate-600 font-bold">Rack ${d.rack || '-'}</td>
-            <td class="py-4 px-5 text-slate-600 font-medium">${formattedRow}</td>
-            <td class="py-4 px-5 text-slate-600 font-bold">${d.level || '-'}</td>
-            <td class="py-4 px-5 text-blue-600 font-bold">${d.qty || '0'}</td>
-            <td class="py-4 px-5 text-slate-600">${d.jenis || '-'}</td>
-            <td class="py-4 px-5 text-slate-600">${formattedDate}</td>
-            <td class="py-4 px-5"><span class="px-3 py-1.5 rounded-md border text-xs font-semibold ${statusColor}">${d.status || 'Pending'}</span></td>
-        `;
-
-        body.innerHTML += `<tr class="text-sm hover:bg-slate-50 transition-colors">${baseHTML}</tr>`;
-        reportBody.innerHTML += `<tr class="text-sm hover:bg-slate-50 transition-colors">${baseHTML}<td class="py-4 px-5 text-slate-500 font-medium">${waktuInput}</td></tr>`;
-      });
-    }
-
-    function renderRacks() {
-      const container = document.getElementById('rack-container');
-      container.innerHTML = '';
-      
-      const colorMap = {
-        10: 'bg-fuchsia-600',
-        9: 'bg-purple-500',   
-        8: 'bg-indigo-500',   
-        7: 'bg-teal-500',     
-        6: 'bg-cyan-500',     // Level 6
-        5: 'bg-slate-400',    // Level 5
-        4: 'bg-orange-500',   // Level 4
-        3: 'bg-red-600',      // Level 3
-        2: 'bg-green-700',    // Level 2
-        1: 'bg-blue-700'      // Level 1
-      };
-
-      rackConfig.forEach(rack => {
-        const maxLevel = Number(rack.levels) || 5; 
-        const totalCap = Number(rack.total) || 100;
-        
-        const currentQty = containerData.filter(d => d.rack === rack.id).reduce((sum, item) => {
-          return item.jenis === 'Masuk' ? sum + Number(item.qty) : sum - Number(item.qty);
-        }, 0);
-        
-        const usagePercentage = Math.min(100, Math.max(0, Math.round((currentQty / totalCap) * 100)));
-        
-        // Membaca Kolom D (Qty per Level) dari Sheet 2 jika ada, atau membagi rata kapasitas total
-        const palletsPerLevel = Number(rack.palletsLevel) || (totalCap / maxLevel);
-
-        let badgeColor = usagePercentage > 85 ? 'bg-red-100 text-red-700' : usagePercentage > 50 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
-
-        let barsHtml = '';
-        
-        // Looping dinamis sesuai jumlah level dari Sheet 2!
-        for (let i = 0; i < maxLevel; i++) {
-          const levelNum = maxLevel - i; 
-          const colorClass = colorMap[levelNum] || 'bg-slate-500';
-          
-          const levelQty = containerData.filter(d => d.rack === rack.id && Number(d.level) === levelNum).reduce((sum, item) => {
-            return item.jenis === 'Masuk' ? sum + Number(item.qty) : sum - Number(item.qty);
-          }, 0);
-
-          const filledInLevel = Math.max(0, Math.min(palletsPerLevel, levelQty));
-          const fillPercentage = (filledInLevel / palletsPerLevel) * 100;
-          
-          barsHtml += `
-            <div class="flex items-center gap-3 mb-2 last:mb-0">
-              <div class="w-7 h-7 flex items-center justify-center text-sm font-bold text-white rounded shadow-sm ${colorClass}">${levelNum}</div>
-              <div class="h-4 w-full bg-slate-200 rounded-sm relative overflow-hidden shadow-inner">
-                <div class="h-full ${colorClass} transition-all duration-1000 ease-out" style="width: ${fillPercentage}%"></div>
-              </div>
-            </div>`;
-        }
-
-        container.innerHTML += `
-          <div class="bg-white border border-slate-200 rounded-xl hover:shadow-md transition-all flex flex-col justify-between">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <h3 class="font-bold text-lg text-slate-800">Rack ${rack.id}</h3>
-                <span class="inline-block px-2 rounded text-xs font-bold mt-1 ${badgeColor}">${usagePercentage}% TERISI</span>
-              </div>
-              <div class="text-right">
-                <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Kapasitas</div>
-                <div class="text-sm font-bold text-slate-700"><span class="text-slate-900 font-bold">${currentQty}</span> / ${totalCap}</div>
-              </div>
-            </div>
-            <div class="p-5 bg-slate-50 rounded-b-xl flex-1 flex flex-col justify-end">
-              ${barsHtml}
-            </div>
-          </div>`;
-      });
-    }
-
-    // --- FUNGSI SIMPAN DATA ---
-    document.getElementById('form-container').onsubmit = async (e) => {
-      e.preventDefault();
-      
-      const locVal = document.getElementById('input-location').value.trim();
-      const licVal = document.getElementById('input-licence').value.trim();
-
-      // VERIFIKASI KEAMANAN SAAT SUBMIT MANUAL
-      if (locVal.toUpperCase().startsWith('LP-')) {
-        showToast("✖ DITOLAK! Location tidak boleh berawalan LP-", "error");
-        return;
-      }
-      if (!licVal.toUpperCase().startsWith('LP-')) {
-        showToast("✖ DITOLAK! Licence Plate wajib berawalan LP-", "error");
-        return;
-      }
-
-      const btn = document.getElementById('btn-submit');
-      const originalText = btn.innerText;
-      btn.innerText = "⏳ Sedang Menyimpan...";
-      btn.disabled = true;
-
-      // Format current time untuk Optimistic UI
-      const now = new Date();
-      const formattedWaktuInput = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth()+1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-
-      const payload = {
-        location: locVal,
-        licencePlate: licVal,
-        rack: document.getElementById('input-rak').value,
-        row: document.getElementById('input-row').value,
-        level: document.getElementById('input-level').value,
-        qty: document.getElementById('input-qty').value,
-        jenis: document.getElementById('input-jenis').value,
-        status: document.getElementById('input-status').value,
-        tanggal: document.getElementById('input-tanggal').value,
-        waktuInput: formattedWaktuInput
-      };
-
-      // --- OPTIMISTIC UI UPDATE ---
-      containerData.unshift(payload); 
-      renderRacks(); 
-      renderSummary(); 
-      renderTable();
-      
-      closeModal();
-      playBeep();
-      showToast("⏳ Sedang menyimpan ke database...", "info");
-
-      try {
-        const urlToFetch = GAS_URL + "?action=insert&t=" + Date.now() + "&data=" + encodeURIComponent(JSON.stringify(payload));
-        const res = await fetch(urlToFetch);
-        const result = await res.json();
-        
-        if(result.status === 'success') {
-          showToast("✔ Data berhasil terinput ke database!", "success");
-          fetchDataSilently();
-        } else {
-          containerData.shift(); renderRacks(); renderSummary(); renderTable();
-          showToast("✖ GAGAL: " + result.message, "error");
-        }
-      } catch (error) {
-        containerData.shift(); renderRacks(); renderSummary(); renderTable();
-        showToast("✖ GAGAL MENGIRIM! Periksa koneksi internet.", "error");
-        console.error("Save Error:", error);
-      } finally {
-        btn.innerText = originalText;
-        btn.disabled = false;
-      }
-    };
-
-    // --- LOGIKA SCANNER ---
-    let html5QrCode = null;
-    window.startScan = (target) => {
-      document.getElementById('scanner-screen').classList.remove('hidden');
-      document.getElementById('reader').innerHTML = '';
-      document.getElementById('scan-error').innerText = ''; 
-      
-      const subtitle = document.getElementById('scanner-subtitle');
-      if (subtitle) {
-        subtitle.innerText = target === 'licence' ? 'SCAN LICENCE PLATE (LP-...)' : 'SCAN LOKASI RAK';
-      }
-
-      setTimeout(() => {
-        html5QrCode = new Html5Qrcode("reader");
-        html5QrCode.start(
-          { facingMode: "environment" }, 
-          { fps: 15, qrbox: 250 }, 
-          (text) => {
-            const scannedText = text.trim();
-            const isLicencePlate = scannedText.toUpperCase().startsWith('LP-');
-
-            if (target === 'licence' && !isLicencePlate) {
-              document.getElementById('scan-error').innerText = "✖ SALAH INPUT! QR bukan Licence Plate (Harus awalan LP-)";
-              return; 
-            }
-
-            if (target === 'location' && isLicencePlate) {
-              document.getElementById('scan-error').innerText = "✖ SALAH INPUT! Ini QR Licence Plate, harap scan QR Lokasi.";
-              return; 
-            }
-
-            document.getElementById(`input-${target}`).value = scannedText;
-            
-            if (target === 'location') {
-              parseLocationData(scannedText);
-            }
-
-            window.closeScanner();
-            showToast("✔ Berhasil memindai!", "success");
-            playBeep();
-          }, 
-          () => {}
-        ).catch(()=> {
-            document.getElementById('scan-error').innerText = "Gagal memanggil kamera. Pastikan izin aktif.";
-        });
-      }, 350);
-    };
-
-    window.closeScanner = () => {
-      if(html5QrCode) {
-        html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(() => {});
-      }
-      document.getElementById('scanner-screen').classList.add('hidden');
-    };
 
     // --- NAVIGATION MENU DINAMIS ---
     function switchMenu(selectedMenu) {
@@ -754,7 +471,6 @@
       const secContainer = document.getElementById('section-container');
       const secReport = document.getElementById('section-report');
 
-      // Reset visibility
       secLayout.classList.add('hidden'); 
       secContainer.classList.add('hidden'); 
       secReport.classList.add('hidden');
@@ -799,7 +515,6 @@
 
     function openModal() { 
       document.getElementById('form-container').reset(); 
-      updateLevelDropdown(); 
       document.getElementById('input-modal').classList.remove('hidden'); 
       document.getElementById('input-tanggal').valueAsDate = new Date(); 
     }
@@ -809,8 +524,287 @@
       document.getElementById('form-container').reset(); 
     }
 
+    // --- RENDER LOGIC KEMBALI KE VERSI SLOT KOTAK (LOCKED) ---
+    function renderSummary() {
+      let totalCap = 0, totalFilledSlots = 0;
+      
+      rackData.forEach(rack => { 
+        const maxLevel = Number(rack.levels) || 6;
+        const palletsPerLevel = Math.round((Number(rack.total) || 100) / maxLevel);
+        totalCap += Number(rack.total) || 0; 
+        
+        let rackFilled = 0;
+        for (let lvl = 1; lvl <= maxLevel; lvl++) {
+          const rowNet = {};
+          containerData.forEach(d => {
+            if (d.rack === rack.title && Number(d.level) === lvl) {
+              let r = parseInt(d.row, 10);
+              if (!isNaN(r)) rowNet[r] = (rowNet[r] || 0) + (d.jenis === 'Masuk' ? (parseInt(d.qty)||1) : -(parseInt(d.qty)||1));
+            }
+          });
+          
+          for (let s = 1; s <= palletsPerLevel; s++) {
+            if (rowNet[s] > 0) rackFilled++;
+          }
+        }
+        totalFilledSlots += rackFilled;
+      });
+      
+      document.getElementById('summary-total-rack').innerText = rackData.length;
+      document.getElementById('summary-used-pallet').innerHTML = `${totalFilledSlots} <span class="text-sm font-medium text-slate-500">pallet</span>`;
+      document.getElementById('summary-utilization').innerText = totalCap > 0 ? `${Math.round((totalFilledSlots / totalCap) * 100)}%` : '0%';
+      document.getElementById('summary-available').innerHTML = `${totalCap - totalFilledSlots} <span class="text-sm font-medium text-slate-500">pallet</span>`;
+    }
+
+    function renderRacks() {
+      const container = document.getElementById('rack-container'); container.innerHTML = '';
+      
+      const colorMap = {
+        10: 'bg-[#4bc0d9]', 9: 'bg-[#4bc0d9]', 8: 'bg-[#4bc0d9]', 7: 'bg-[#4bc0d9]',     
+        6: 'bg-[#4bc0d9]',    // Level 6 (Cyan/Biru Muda)
+        5: 'bg-[#8c8c8c]',    // Level 5 (Abu-abu)
+        4: 'bg-[#ff9900]',    // Level 4 (Oranye)
+        3: 'bg-[#ff0000]',    // Level 3 (Merah)
+        2: 'bg-[#38761d]',    // Level 2 (Hijau)
+        1: 'bg-[#0000ff]'     // Level 1 (Biru Tua)
+      };
+
+      rackData.forEach(rack => {
+        const maxLevel = Number(rack.levels) || 6; 
+        const totalCap = Number(rack.total) || 100;
+        const palletsPerLevel = Math.round(totalCap / maxLevel);
+
+        let rackFilledSlots = 0;
+        let barsHtml = '';
+        
+        for (let i = 0; i < maxLevel; i++) {
+          const levelNum = maxLevel - i; 
+          const colorClass = colorMap[levelNum] || 'bg-slate-500';
+          
+          const rowNet = {};
+          containerData.forEach(d => {
+            if (d.rack === rack.title && Number(d.level) === levelNum) {
+              let r = parseInt(d.row, 10);
+              if (!isNaN(r)) {
+                rowNet[r] = (rowNet[r] || 0) + (d.jenis === 'Masuk' ? (parseInt(d.qty)||1) : -(parseInt(d.qty)||1));
+              }
+            }
+          });
+
+          let slotsHtml = '';
+          for (let s = 1; s <= palletsPerLevel; s++) {
+            const isFilled = rowNet[s] > 0;
+            if (isFilled) rackFilledSlots++;
+            slotsHtml += `<div class="flex-1 h-full ${isFilled ? colorClass : 'bg-transparent'} border-r border-slate-300/30 last:border-r-0 transition-colors duration-300"></div>`;
+          }
+          
+          barsHtml += `
+            <div class="flex items-center gap-3 mb-2 last:mb-0">
+              <div class="w-7 h-7 flex items-center justify-center text-sm font-bold text-white rounded shadow-sm shrink-0 ${colorClass}">${levelNum}</div>
+              <div class="h-4 w-full flex bg-slate-200/80 rounded-sm relative overflow-hidden shadow-inner">
+                ${slotsHtml}
+              </div>
+            </div>`;
+        }
+        
+        const usagePercentage = Math.min(100, Math.max(0, Math.round((rackFilledSlots / totalCap) * 100)));
+        let badgeColor = usagePercentage >= 90 ? 'bg-red-100 text-red-700' : usagePercentage >= 60 ? 'bg-amber-100 text-amber-700' : usagePercentage === 0 ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700';
+
+        container.innerHTML += `
+          <div class="border border-slate-200 rounded-xl bg-white flex flex-col justify-between hover:shadow-md transition-all">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-start">
+              <div>
+                <h3 class="font-bold text-lg text-slate-800">${rack.title}</h3>
+                <span class="inline-block px-2 rounded text-xs font-bold mt-1 ${badgeColor}">${usagePercentage}% TERISI</span>
+              </div>
+              <div class="text-right">
+                <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Kapasitas</div>
+                <div class="text-sm font-bold text-slate-700"><span class="text-slate-900">${rackFilledSlots}</span> / ${totalCap}</div>
+              </div>
+            </div>
+            <div class="p-5 bg-slate-50 rounded-b-xl flex-1 flex flex-col justify-end">
+              ${barsHtml}
+            </div>
+          </div>`;
+      });
+    }
+
+    function renderTable() {
+      const tbody = document.getElementById('table-body');
+      const reportBody = document.getElementById('report-table-body');
+      
+      tbody.innerHTML = '';
+      reportBody.innerHTML = '';
+
+      if (containerData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-slate-400 text-sm">Belum ada data.</td></tr>`;
+        reportBody.innerHTML = `<tr><td colspan="10" class="py-6 text-center text-slate-400 text-sm">Belum ada data.</td></tr>`;
+        return;
+      }
+
+      containerData.forEach(item => {
+        const statusColor = item.status === 'Received' ? 'text-emerald-700 bg-emerald-50' : item.status === 'Dispatched' ? 'text-blue-700 bg-blue-50' : 'text-amber-700 bg-amber-50';
+        const formattedDate = formatDate(item.tanggal);
+        const formattedRow = item.row ? String(item.row).padStart(3, '0') : '-';
+        const waktuInput = item.waktuInput ? item.waktuInput : '-';
+
+        const baseHTML = `
+          <td class="py-4 px-5 font-semibold text-slate-900">${item.location || '-'}</td>
+          <td class="py-4 px-5 text-slate-600">${item.licencePlate || '-'}</td>
+          <td class="py-4 px-5 text-slate-600 font-bold">${item.rack || '-'}</td>
+          <td class="py-4 px-5 text-slate-600 font-medium">${formattedRow}</td>
+          <td class="py-4 px-5 text-slate-600 font-bold">${item.level || '-'}</td>
+          <td class="py-4 px-5 text-blue-600 font-bold">${item.qty || 0}</td>
+          <td class="py-4 px-5 text-slate-600">${item.jenis}</td>
+          <td class="py-4 px-5 text-slate-600">${formattedDate}</td>
+          <td class="py-4 px-5"><span class="px-3 py-1.5 rounded-md border text-xs font-semibold ${statusColor}">${item.status}</span></td>
+        `;
+
+        tbody.innerHTML += `<tr class="border-b border-slate-100 text-sm hover:bg-slate-50 transition-colors">${baseHTML}</tr>`;
+        reportBody.innerHTML += `<tr class="border-b border-slate-100 text-sm hover:bg-slate-50 transition-colors">${baseHTML}<td class="py-4 px-5 text-slate-500 font-medium">${waktuInput}</td></tr>`;
+      });
+    }
+
+    // --- MENGGUNAKAN API UNTUK BACKEND ---
+    async function loadInitialData() {
+      try {
+        const urlToFetch = GAS_URL + "?t=" + Date.now();
+        const response = await fetch(urlToFetch);
+        const data = await response.json();
+        
+        if (data.transactions && data.rackConfigs) {
+            containerData = data.transactions || [];
+            if (data.rackConfigs.length > 0) {
+                rackData = data.rackConfigs.map(r => ({
+                    title: r.id.startsWith('Rack') ? r.id : 'Rack ' + r.id,
+                    total: parseInt(r.total) || 100,
+                    levels: parseInt(r.levels) || 6
+                }));
+                populateRackOptions(); 
+            }
+        } else {
+            containerData = data || [];
+        }
+        
+        renderSummary();
+        renderRacks();
+        renderTable();
+      } catch (err) {
+        console.error("Gagal load data:", err);
+      } finally {
+        document.getElementById('loading-overlay').classList.add('hidden');
+      }
+    }
+
+    async function fetchDataSilently() {
+      try {
+        const urlToFetch = GAS_URL + "?t=" + Date.now();
+        const response = await fetch(urlToFetch);
+        const data = await response.json();
+        
+        if (data.transactions && data.rackConfigs) {
+            containerData = data.transactions || [];
+            if (data.rackConfigs.length > 0) {
+                rackData = data.rackConfigs.map(r => ({
+                    title: r.id.startsWith('Rack') ? r.id : 'Rack ' + r.id,
+                    total: parseInt(r.total) || 100,
+                    levels: parseInt(r.levels) || 6
+                }));
+            }
+        } else {
+            containerData = data || [];
+        }
+        
+        renderSummary();
+        renderRacks();
+        renderTable();
+        
+        const syncInd = document.getElementById('sync-indicator');
+        if(syncInd) {
+            syncInd.classList.remove('hidden');
+            setTimeout(() => syncInd.classList.add('hidden'), 2000);
+        }
+      } catch (err) {
+        console.error("Silent sync failed:", err);
+      }
+    }
+
+    function populateRackOptions() {
+      const selectRak = document.getElementById('input-rak'); selectRak.innerHTML = '';
+      rackData.forEach(rack => { const option = document.createElement('option'); option.value = rack.title; option.textContent = rack.title; selectRak.appendChild(option); });
+    }
+
+    // --- FUNGSI SIMPAN DATA ---
+    document.getElementById('form-container').onsubmit = async (e) => {
+      e.preventDefault();
+      
+      const locVal = document.getElementById('input-location').value.trim();
+      const licVal = document.getElementById('input-licence').value.trim();
+
+      if (locVal.toUpperCase().startsWith('LP-')) {
+        showToast("✖ DITOLAK! Location tidak boleh berawalan LP-", "error");
+        return;
+      }
+      if (!licVal.toUpperCase().startsWith('LP-')) {
+        showToast("✖ DITOLAK! Licence Plate wajib berawalan LP-", "error");
+        return;
+      }
+
+      const btn = document.getElementById('btn-submit');
+      const originalText = btn.innerText;
+      btn.innerText = "⏳ Sedang Menyimpan...";
+      btn.disabled = true;
+
+      const now = new Date();
+      const formattedWaktuInput = `${String(now.getDate()).padStart(2, '0')}-${String(now.getMonth()+1).padStart(2, '0')}-${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
+      const payload = {
+        location: locVal,
+        licencePlate: licVal,
+        rack: document.getElementById('input-rak').value,
+        row: document.getElementById('input-row').value,
+        level: document.getElementById('input-level').value,
+        qty: parseInt(document.getElementById('input-qty').value, 10),
+        jenis: document.getElementById('input-jenis').value,
+        status: document.getElementById('input-status').value,
+        tanggal: document.getElementById('input-tanggal').value,
+        waktuInput: formattedWaktuInput
+      };
+
+      // OPTIMISTIC UI UPDATE
+      containerData.unshift(payload); 
+      renderRacks(); 
+      renderSummary(); 
+      renderTable();
+      
+      closeModal();
+      playBeep();
+      showToast("⏳ Sedang menyimpan ke database...", "info");
+
+      try {
+        const urlToFetch = GAS_URL + "?action=insert&t=" + Date.now() + "&data=" + encodeURIComponent(JSON.stringify(payload));
+        const res = await fetch(urlToFetch);
+        const result = await res.json();
+        
+        if(result.status === 'success') {
+          showToast("✔ Data berhasil terinput ke database!", "success");
+          fetchDataSilently();
+        } else {
+          containerData.shift(); renderRacks(); renderSummary(); renderTable();
+          showToast("✖ GAGAL: " + result.message, "error");
+        }
+      } catch (error) {
+        containerData.shift(); renderRacks(); renderSummary(); renderTable();
+        showToast("✖ GAGAL MENGIRIM! Periksa koneksi internet.", "error");
+        console.error("Save Error:", error);
+      } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
+    };
+
     window.onload = () => {
-        loadData();
+        loadInitialData();
         setInterval(fetchDataSilently, 15000);
     };
   </script>
