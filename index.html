@@ -541,6 +541,23 @@
                   return; // Hentikan eksekusi, Kamera tetap menyala!
                 }
 
+                // VALIDASI KECOCOKAN SAAT SCAN
+                if (currentScanTarget === 'licence') {
+                  const currentLoc = document.getElementById('input-location').value.trim();
+                  if (currentLoc && scannedText.toUpperCase() !== "LP-" + currentLoc.toUpperCase()) {
+                    document.getElementById('scan-error').innerHTML = "✖ <b>DITOLAK!</b> Licence Plate tidak cocok dengan Location (" + currentLoc + ")";
+                    return; // Jangan loloskan
+                  }
+                }
+                
+                if (currentScanTarget === 'location') {
+                  const currentLic = document.getElementById('input-licence').value.trim();
+                  if (currentLic && currentLic.toUpperCase() !== "LP-" + scannedText.toUpperCase()) {
+                    document.getElementById('scan-error').innerHTML = "✖ <b>DITOLAK!</b> Location tidak cocok dengan Licence Plate (" + currentLic + ")";
+                    return; // Jangan loloskan
+                  }
+                }
+
                 // Jika Valid, loloskan dan tutup kamera
                 errorElement.innerHTML = '';
                 playBeep();
@@ -904,6 +921,12 @@
       }
       if (!licVal.toUpperCase().startsWith('LP-')) {
         showToast("✖ DITOLAK! Licence Plate wajib berawalan LP-", "error");
+        return;
+      }
+
+      // --- VALIDASI ANTI-MISMATCH ---
+      if (licVal.toUpperCase() !== ("LP-" + locVal.toUpperCase())) {
+        showToast("✖ DITOLAK! Licence Plate (" + licVal + ") tidak cocok dengan Location (" + locVal + "). Seharusnya LP-" + locVal, "error");
         return;
       }
 
