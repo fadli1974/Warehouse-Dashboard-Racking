@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Warehouse Layout Management</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Library scanner HTML5 QR Code -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
   <style>
     .sidebar-transition { transition: transform 0.3s ease-in-out; }
@@ -43,6 +44,7 @@
       <span id="toast-message">Notifikasi</span>
   </div>
 
+  <!-- LAYAR SCANNER KAMERA -->
   <div id="scanner-screen" class="fixed inset-0 bg-slate-950 z-[110] hidden flex-col items-center justify-center p-4 text-white">
       <div class="w-full max-w-md space-y-6">
           <div class="flex items-center justify-between px-2">
@@ -63,6 +65,7 @@
                   </div>
               </div>
               
+              <!-- Bingkai Scanner Biru -->
               <div class="absolute top-0 left-2 w-12 h-12 border-t-8 border-l-8 border-blue-500 rounded-tl-3xl z-20 pointer-events-none"></div>
               <div class="absolute top-0 right-2 w-12 h-12 border-t-8 border-r-8 border-blue-500 rounded-tr-3xl z-20 pointer-events-none"></div>
               <div class="absolute bottom-0 left-2 w-12 h-12 border-b-8 border-l-8 border-blue-500 rounded-bl-3xl z-20 pointer-events-none"></div>
@@ -75,6 +78,7 @@
   </div>
 
   <div class="min-h-screen flex flex-col md:flex-row relative z-0">
+    <!-- Header Mobile (Hanya tampil di HP) -->
     <div class="md:hidden flex justify-between items-center bg-white p-4 border-b border-slate-200 z-40 sticky top-0 shadow-sm">
       <h2 class="text-xl font-bold text-slate-900">WMS Menu</h2>
       <button id="mobile-menu-btn" class="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 border border-slate-200 focus:outline-none">
@@ -84,6 +88,7 @@
     
     <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 hidden transition-opacity"></div>
     
+    <!-- Sidebar: Secara default ditambahkan md:hidden agar tersembunyi di Desktop -->
     <div id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 z-40 w-64 bg-white border-r border-slate-200 sidebar-transition h-full overflow-y-auto shadow-lg md:shadow-none md:hidden">
       <div class="p-6 hidden md:block border-b border-slate-100">
         <h2 class="text-2xl font-black text-slate-900 tracking-tight">WMS<span class="text-blue-600">.</span></h2>
@@ -92,6 +97,7 @@
         <div id="menu-dashboard" onclick="switchMenu('Dashboard')" class="px-6 py-3 cursor-pointer font-semibold text-blue-700 bg-blue-50/50 border-r-4 border-blue-600 transition-colors">Dashboard</div>
         <div id="menu-layout-rack" onclick="switchMenu('Layout Rack')" class="px-6 py-3 cursor-pointer font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-r-4 border-transparent transition-colors">Layout Rack</div>
         <div id="menu-warehouse-management" onclick="switchMenu('Warehouse Management')" class="px-6 py-3 cursor-pointer font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-r-4 border-transparent transition-colors">Warehouse Management</div>
+        <div id="menu-report" onclick="switchMenu('Report')" class="px-6 py-3 cursor-pointer font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-r-4 border-transparent transition-colors">Report</div>
       </div>
     </div>
 
@@ -101,9 +107,12 @@
         <p class="text-slate-500 font-medium animate-pulse">Menghubungkan ke Spreadsheet...</p>
       </div>
 
+      <!-- Header Terintegrasi (Tombol Garis 3 + Judul + Horizontal Summary + Tombol Input) -->
       <div class="mb-6 md:mb-8 flex flex-col xl:flex-row justify-between items-center gap-6">
         
+        <!-- Judul Dashboard & Tombol Garis 3 (Kiri) -->
         <div class="shrink-0 w-full xl:w-auto flex items-center justify-center xl:justify-start gap-4">
+          <!-- Tombol Desktop Menu -->
           <button onclick="toggleDesktopSidebar()" class="hidden md:flex p-2.5 bg-white rounded-lg shadow-sm border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none items-center justify-center">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
@@ -114,6 +123,7 @@
           </div>
         </div>
 
+        <!-- Summary Horizontal (Tengah) -->
         <div class="flex gap-4 w-full xl:w-auto overflow-x-auto hide-scrollbar flex-1 justify-start xl:justify-center px-1 py-1">
           <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[200px]">
             <div class="text-xs font-medium text-slate-500 mb-1">Total Rack</div>
@@ -133,6 +143,7 @@
           </div>
         </div>
 
+        <!-- Tombol Input Location (Kanan) -->
         <div class="shrink-0 w-full xl:w-auto flex justify-center xl:justify-end">
           <button id="btn-open-modal" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all whitespace-nowrap">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
@@ -141,8 +152,10 @@
         </div>
       </div>
 
+      <!-- Konten Utama (Kini Lebar Penuh/Full Width) -->
       <div class="flex flex-col gap-6">
         
+        <!-- Layout Gudang Section -->
         <div id="section-layout" class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm">
           <div class="flex justify-between items-center mb-6">
             <h2 class="font-bold text-xl text-slate-800">Visual Racking</h2>
@@ -150,9 +163,11 @@
               <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Live Sync Active
             </div>
           </div>
+          <!-- Grid dibentangkan lebih luas hingga 5 kolom di monitor besar -->
           <div id="rack-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6"></div>
         </div>
 
+        <!-- Warehouse Management Section -->
         <div id="section-container" class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm relative">
           <div class="flex justify-between items-center mb-6">
             <h2 class="font-bold text-xl text-slate-800">Warehouse Management</h2>
@@ -177,9 +192,36 @@
           </div>
         </div>
 
+        <!-- Report Data Transaksi Section (Baru ditambahkan) -->
+        <div id="section-report" class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm relative hidden">
+          <div class="flex justify-between items-center mb-6">
+            <h2 class="font-bold text-xl text-slate-800">Report Data Transaksi</h2>
+          </div>
+          <div class="overflow-x-auto rounded-xl border border-slate-100">
+            <table class="w-full text-left border-collapse min-w-[1100px]">
+              <thead class="bg-slate-50/50 border-b border-slate-200">
+                <tr class="text-sm">
+                  <th class="py-4 px-5 font-semibold text-slate-700">Location</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Licence Plate</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Rack</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Row</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Level</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Qty</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Jenis</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Tanggal</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Status</th>
+                  <th class="py-4 px-5 font-semibold text-slate-700">Waktu Input</th>
+                </tr>
+              </thead>
+              <tbody id="report-table-body"></tbody>
+            </table>
+          </div>
+        </div>
+
       </div> </div>
   </div>
 
+  <!-- Modal Form -->
   <div id="input-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
     <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
     <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 relative z-10 overflow-hidden flex flex-col max-h-[90vh] overflow-y-auto">
@@ -402,8 +444,9 @@
       sidebar.classList.toggle('md:block');
     }
 
+    // --- PENGATURAN MENU DINAMIS ---
     function switchMenu(selectedMenu) {
-      const menus = ['Dashboard', 'Layout Rack', 'Warehouse Management'];
+      const menus = ['Dashboard', 'Layout Rack', 'Warehouse Management', 'Report'];
       const pageTitle = document.getElementById('page-title');
 
       menus.forEach(menu => {
@@ -420,16 +463,26 @@
 
       const secLayout = document.getElementById('section-layout');
       const secContainer = document.getElementById('section-container');
+      const secReport = document.getElementById('section-report');
+
+      // Reset semua view menjadi tersembunyi terlebih dahulu
+      secLayout.classList.add('hidden'); 
+      secContainer.classList.add('hidden'); 
+      secReport.classList.add('hidden');
 
       if (selectedMenu === 'Dashboard') {
-        secLayout.classList.remove('hidden'); secContainer.classList.remove('hidden');
+        secLayout.classList.remove('hidden'); 
+        secContainer.classList.remove('hidden');
         pageTitle.innerText = 'Warehouse Dashboard';
       } else if (selectedMenu === 'Layout Rack') {
-        secLayout.classList.remove('hidden'); secContainer.classList.add('hidden');
+        secLayout.classList.remove('hidden');
         pageTitle.innerText = 'Layout Rack';
       } else if (selectedMenu === 'Warehouse Management') {
-        secLayout.classList.add('hidden'); secContainer.classList.remove('hidden');
+        secContainer.classList.remove('hidden');
         pageTitle.innerText = 'Warehouse Management';
+      } else if (selectedMenu === 'Report') {
+        secReport.classList.remove('hidden');
+        pageTitle.innerText = 'Report';
       }
 
       if (window.innerWidth < 768) {
@@ -543,17 +596,50 @@
       });
     }
 
+    // --- FUNGSI RENDER TABEL (WAREHOUSE MANAGEMENT & REPORT) ---
     function renderTable() {
-      const tbody = document.getElementById('container-table-body'); tbody.innerHTML = '';
-      if (containerData.length === 0) return tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-slate-400 text-sm">Belum ada data.</td></tr>`;
+      const tbody = document.getElementById('container-table-body'); 
+      const reportBody = document.getElementById('report-table-body');
+      
+      tbody.innerHTML = '';
+      reportBody.innerHTML = '';
+
+      if (containerData.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-slate-400 text-sm">Belum ada data.</td></tr>`;
+        reportBody.innerHTML = `<tr><td colspan="10" class="py-6 text-center text-slate-400 text-sm">Belum ada data.</td></tr>`;
+        return;
+      }
+
       containerData.forEach(item => {
         const statusColor = item.status === 'Received' ? 'text-emerald-700 bg-emerald-50' : item.status === 'Dispatched' ? 'text-blue-700 bg-blue-50' : 'text-amber-700 bg-amber-50';
+        
         // Memanggil fungsi formatDate untuk setiap item tanggal
         const formattedDate = formatDate(item.tanggal);
+        
         // Memformat Row agar selalu tampil 3 digit (Contoh: 1 menjadi 001, 10 menjadi 010)
         const formattedRow = item.row ? String(item.row).padStart(3, '0') : '-';
         
-        tbody.innerHTML += `<tr class="border-b border-slate-100 text-sm"><td class="py-4 px-5 font-semibold">${item.location || '-'}</td><td class="py-4 px-5">${item.licencePlate || '-'}</td><td class="py-4 px-5">${item.rack || '-'}</td><td class="py-4 px-5">${formattedRow}</td><td class="py-4 px-5 font-bold">${item.level || '-'}</td><td class="py-4 px-5 text-blue-600">${item.qty || 0}</td><td class="py-4 px-5">${item.jenis}</td><td class="py-4 px-5">${formattedDate}</td><td class="py-4 px-5"><span class="px-3 py-1.5 rounded-md border text-xs font-semibold ${statusColor}">${item.status}</span></td></tr>`;
+        // Waktu Input (Membaca kolom ke-10 / item.waktuInput. Jika belum ada dari Google Script akan tampil '-')
+        const waktuInput = item.waktuInput ? item.waktuInput : '-';
+        
+        // Base HTML untuk kolom A sampai I (Digunakan di kedua tabel)
+        const baseHTML = `
+          <td class="py-4 px-5 font-semibold">${item.location || '-'}</td>
+          <td class="py-4 px-5">${item.licencePlate || '-'}</td>
+          <td class="py-4 px-5">${item.rack || '-'}</td>
+          <td class="py-4 px-5">${formattedRow}</td>
+          <td class="py-4 px-5 font-bold">${item.level || '-'}</td>
+          <td class="py-4 px-5 text-blue-600">${item.qty || 0}</td>
+          <td class="py-4 px-5">${item.jenis}</td>
+          <td class="py-4 px-5">${formattedDate}</td>
+          <td class="py-4 px-5"><span class="px-3 py-1.5 rounded-md border text-xs font-semibold ${statusColor}">${item.status}</span></td>
+        `;
+
+        // Render untuk tabel Warehouse Management (Tanpa Waktu Input)
+        tbody.innerHTML += `<tr class="border-b border-slate-100 text-sm">${baseHTML}</tr>`;
+        
+        // Render untuk tabel Report (Tambahan Waktu Input Kolom J)
+        reportBody.innerHTML += `<tr class="border-b border-slate-100 text-sm">${baseHTML}<td class="py-4 px-5 text-slate-500 font-medium">${waktuInput}</td></tr>`;
       });
     }
 
@@ -649,11 +735,16 @@
         return;
       }
 
+      // Format current time untuk Optimistic UI
+      const now = new Date();
+      const formattedWaktuInput = `${String(now.getDate()).padStart(2, '0')}/${String(now.getMonth()+1).padStart(2, '0')}/${now.getFullYear()} ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+
       const newData = {
         location: locVal, licencePlate: licVal,
         rack: document.getElementById('input-rak').value, row: document.getElementById('input-row').value, level: document.getElementById('input-level').value,
         qty: parseInt(document.getElementById('input-qty').value, 10), jenis: document.getElementById('input-jenis').value, 
-        status: document.getElementById('input-status').value, tanggal: document.getElementById('input-tanggal').value
+        status: document.getElementById('input-status').value, tanggal: document.getElementById('input-tanggal').value,
+        waktuInput: formattedWaktuInput // Simulasi waktu input agar langsung tampil
       };
 
       // --- OPTIMISTIC UI UPDATE: LANGSUNG UPDATE UI SEBELUM PENGIRIMAN ---
