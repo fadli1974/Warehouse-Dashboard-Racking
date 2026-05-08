@@ -137,18 +137,25 @@
 
         <!-- SUMMARY KHUSUS UNTUK MENU REPORT -->
         <div id="report-summary" class="hidden gap-4 w-full xl:w-auto overflow-x-auto hide-scrollbar flex-1 justify-start xl:justify-center px-1 py-1 transition-all">
-          <button onclick="showToast('Fitur Download Template sedang diproses', 'info')" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[200px] text-left hover:bg-slate-50 hover:border-blue-300 transition-colors focus:outline-none">
+          <button onclick="downloadTemplate()" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[200px] text-left hover:bg-slate-50 hover:border-blue-300 transition-colors focus:outline-none">
             <div class="text-xs font-medium text-slate-500 mb-1">Format Standar</div>
             <div class="font-bold text-xl text-slate-800">Template</div>
           </button>
-          <button onclick="showToast('Fitur Upload sedang diproses', 'info')" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px] text-left hover:bg-slate-50 hover:border-emerald-300 transition-colors focus:outline-none">
+          
+          <!-- Input File Tersembunyi untuk Upload CSV -->
+          <input type="file" id="csv-upload" accept=".csv" class="hidden" onchange="handleFileUpload(event)">
+          
+          <!-- Tombol Pemicu Upload Data -->
+          <button onclick="document.getElementById('csv-upload').click()" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px] text-left hover:bg-slate-50 hover:border-emerald-300 transition-colors focus:outline-none">
             <div class="text-xs font-medium text-slate-500 mb-1">Import Excel/CSV</div>
             <div class="font-bold text-xl text-slate-800">Upload Data</div>
           </button>
-          <button onclick="showToast('Fitur Export sedang diproses', 'info')" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[160px] flex-1 max-w-[220px] text-left hover:bg-slate-50 hover:border-amber-300 transition-colors focus:outline-none">
+          
+          <button onclick="downloadData()" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[160px] flex-1 max-w-[220px] text-left hover:bg-slate-50 hover:border-amber-300 transition-colors focus:outline-none">
             <div class="text-xs font-medium text-slate-500 mb-1">Export Excel/CSV</div>
             <div class="font-bold text-xl text-slate-800">Download Data</div>
           </button>
+          
           <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px]">
             <div class="text-xs font-medium text-slate-500 mb-1">Utilisasi Keseluruhan</div>
             <div id="summary-utilization-report" class="font-bold text-2xl text-slate-800">0%</div>
@@ -287,7 +294,7 @@
 
   <script>
     // --- GANTI DENGAN URL DEPLOYMENT BARU ANDA (SETELAH UPDATE KODE.GS) ---
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzbLEtCcp1s31HabjmWtX3gXhDWz8mkziwHKfb3J5Ip_3ITVHdDHBwsQIV-HoThqNc2/exec";
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbznaOvcN4Q96TVJGQtTNYBV8Bt-GzFoLg-sZxSaAfvNB6cVX-U1b-E8VZnqLrl9667H/exec";
     
     // Default config 
     let rackData = [
@@ -330,6 +337,152 @@
       toastTimeout = setTimeout(() => { 
         toast.classList.add('-translate-y-24', 'opacity-0'); 
       }, 4000);
+    }
+
+    // --- FUNGSI DOWNLOAD TEMPLATE ---
+    function downloadTemplate() {
+      // Header persis dari Kolom A sampai Kolom I (Waktu Input/Kolom J otomatis di backend)
+      const headers = ["Location", "Licence Plate", "Rack", "Row", "Level", "Qty", "Jenis", "Tanggal", "Status"];
+      const csvContent = headers.join(",") + "\n";
+      
+      // Membuat file Blob CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      
+      // Membuat tag 'a' sementara untuk men-trigger download
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      link.setAttribute("download", "Template_Upload_Warehouse.csv");
+      document.body.appendChild(link);
+      
+      link.click(); // Mengeksekusi download otomatis
+      document.body.removeChild(link); // Menghapus elemen setelah berhasil
+      
+      showToast("Template berhasil diunduh!", "success");
+    }
+
+    // --- FUNGSI UPLOAD DATA CSV SECARA MASSAL ---
+    async function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      const reader = new FileReader();
+      reader.onload = async function(e) {
+        const text = e.target.result;
+        // Membaca file baris per baris
+        const lines = text.split(/\r?\n/);
+        const parsedData = [];
+
+        // Mulai dari baris ke-1 (melewati baris Header di baris 0)
+        for (let i = 1; i < lines.length; i++) {
+          if (!lines[i].trim()) continue;
+          
+          // Memisahkan kolom dengan koma, serta membersihkan tanda kutip ("")
+          const cols = lines[i].split(',').map(col => col.trim().replace(/^"|"$/g, ''));
+          
+          if (cols.length >= 9) {
+            parsedData.push({
+              location: cols[0],
+              licencePlate: cols[1],
+              rack: cols[2],
+              row: cols[3],
+              level: cols[4],
+              qty: parseInt(cols[5], 10) || 0,
+              jenis: cols[6],
+              tanggal: cols[7],
+              status: cols[8]
+            });
+          }
+        }
+
+        if (parsedData.length === 0) {
+          showToast("✖ File CSV kosong atau format tidak sesuai!", "error");
+          event.target.value = ''; // Reset input agar bisa upload file yang sama
+          return;
+        }
+
+        showToast("⏳ Mengunggah " + parsedData.length + " data ke Spreadsheet...", "info");
+
+        try {
+          // Menggunakan form-urlencoded via POST untuk keamanan dan menghindari batas limit URL
+          const formData = new URLSearchParams();
+          formData.append('action', 'upload');
+          formData.append('data', JSON.stringify(parsedData));
+
+          const res = await fetch(GAS_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+            body: formData
+          });
+          
+          const result = await res.json();
+          if (result.status === 'success') {
+            showToast("✔ " + result.inserted + " data berhasil diunggah!", "success");
+            fetchDataSilently(); // Update tabel dan dashboard tanpa refresh halaman
+          } else {
+            showToast("✖ GAGAL: " + result.message, "error");
+          }
+        } catch (error) {
+          showToast("✖ GAGAL MENGUNGGAH! Periksa koneksi internet.", "error");
+          console.error("Upload Error:", error);
+        }
+        
+        event.target.value = ''; // Reset input
+      };
+      
+      reader.readAsText(file);
+    }
+
+    // --- FUNGSI DOWNLOAD DATA ---
+    function downloadData() {
+      if (containerData.length === 0) {
+        showToast("✖ Tidak ada data untuk diunduh!", "error");
+        return;
+      }
+
+      // Header untuk Kolom A sampai Kolom J
+      const headers = ["Location", "Licence Plate", "Rack", "Row", "Level", "Qty", "Jenis", "Tanggal", "Status", "Waktu Input"];
+      let csvContent = headers.join(",") + "\n";
+
+      // Memasukkan setiap baris data
+      containerData.forEach(item => {
+        const formattedRow = item.row ? String(item.row).padStart(3, '0') : '-';
+        const rowData = [
+          item.location || "",
+          item.licencePlate || "",
+          item.rack || "",
+          formattedRow,
+          item.level || "",
+          item.qty || 0,
+          item.jenis || "",
+          formatDate(item.tanggal) || "",
+          item.status || "",
+          item.waktuInput || "-"
+        ];
+        
+        // Membungkus data dengan tanda kutip untuk mencegah error jika ada koma (,) di dalam data
+        const csvRow = rowData.map(val => `"${String(val).replace(/"/g, '""')}"`).join(",");
+        csvContent += csvRow + "\n";
+      });
+
+      // Membuat file Blob CSV
+      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      
+      // Membuat tag 'a' sementara untuk men-trigger download
+      const link = document.createElement("a");
+      link.setAttribute("href", url);
+      
+      // Format nama file dengan tanggal hari ini
+      const now = new Date();
+      const dateStr = `${String(now.getDate()).padStart(2, '0')}${String(now.getMonth()+1).padStart(2, '0')}${now.getFullYear()}`;
+      link.setAttribute("download", `Report_Warehouse_${dateStr}.csv`);
+      
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      
+      showToast("✔ Data berhasil diunduh!", "success");
     }
 
     // --- HTML5-QRCode LIVE SCANNER ---
@@ -473,12 +626,11 @@
       const dashboardSummary = document.getElementById('dashboard-summary');
       const reportSummary = document.getElementById('report-summary');
 
-      // Hide all content sections initially
+      // Sembunyikan semua tampilan terlebih dahulu
       secLayout.classList.add('hidden'); 
       secContainer.classList.add('hidden'); 
       if(secReport) secReport.classList.add('hidden');
 
-      // Hide all summary sections initially
       if(dashboardSummary) { dashboardSummary.classList.add('hidden'); dashboardSummary.classList.remove('flex'); }
       if(reportSummary) { reportSummary.classList.add('hidden'); reportSummary.classList.remove('flex'); }
 
@@ -530,11 +682,11 @@
         totalFilledSlots += rackFilled;
       });
       
-      // Update Original Summary
+      // Update Original Summary (Dashboard)
       document.getElementById('summary-total-rack').innerText = rackData.length;
       document.getElementById('summary-used-pallet').innerHTML = `${totalFilledSlots} <span class="text-sm font-medium text-slate-500">pallet</span>`;
       
-      // Update Utilization on both summaries
+      // Update Utilization di kedua Summary
       const utilText = totalCap > 0 ? `${Math.round((totalFilledSlots / totalCap) * 100)}%` : '0%';
       document.getElementById('summary-utilization').innerText = utilText;
       const utilReport = document.getElementById('summary-utilization-report');
