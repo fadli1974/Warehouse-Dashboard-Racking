@@ -162,7 +162,7 @@
           </div>
         </div>
 
-        <div class="shrink-0 w-full xl:w-auto flex justify-center xl:justify-end">
+        <div id="input-location-wrapper" class="shrink-0 w-full xl:w-auto hidden justify-center xl:justify-end">
           <button id="btn-open-modal" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all whitespace-nowrap">
             <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
             Input Location
@@ -638,6 +638,7 @@
       
       const dashboardSummary = document.getElementById('dashboard-summary');
       const reportSummary = document.getElementById('report-summary');
+      const inputLocationWrapper = document.getElementById('input-location-wrapper');
 
       // Sembunyikan semua tampilan terlebih dahulu
       secLayout.classList.add('hidden'); 
@@ -646,6 +647,7 @@
 
       if(dashboardSummary) { dashboardSummary.classList.add('hidden'); dashboardSummary.classList.remove('flex'); }
       if(reportSummary) { reportSummary.classList.add('hidden'); reportSummary.classList.remove('flex'); }
+      if(inputLocationWrapper) { inputLocationWrapper.classList.add('hidden'); inputLocationWrapper.classList.remove('flex'); }
 
       if (selectedMenu === 'Dashboard') {
         secLayout.classList.remove('hidden'); secContainer.classList.remove('hidden');
@@ -662,6 +664,7 @@
       } else if (selectedMenu === 'Report') {
         if(secReport) secReport.classList.remove('hidden');
         if(reportSummary) { reportSummary.classList.remove('hidden'); reportSummary.classList.add('flex'); }
+        if(inputLocationWrapper) { inputLocationWrapper.classList.remove('hidden'); inputLocationWrapper.classList.add('flex'); }
         pageTitle.innerText = 'Report';
       }
 
