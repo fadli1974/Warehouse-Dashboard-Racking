@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Warehouse Layout Management</title>
+  <title>Warehouse Layout Management | LJR Logistics</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <!-- Library scanner HTML5 QR Code -->
   <script src="https://unpkg.com/html5-qrcode" type="text/javascript"></script>
@@ -13,67 +13,64 @@
     ::-webkit-scrollbar-track { background: #f1f5f9; }
     ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    
     .loader { border: 4px solid #f3f3f3; border-top: 4px solid #3b82f6; border-radius: 50%; width: 30px; height: 30px; animation: spin 1s linear infinite; }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     @keyframes scan { 0% { top: 0; } 50% { top: 100%; } 100% { top: 0; } }
     .animate-scan-line { animation: scan 2.5s linear infinite; }
     
-    /* Mencegah kamera mengecil jadi 0px di Apps Script */
+    .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+    .hide-scrollbar::-webkit-scrollbar { display: none; }
+
     #reader {
       width: 100%;
       min-height: 300px; 
       background-color: #0f172a;
-      border-radius: 1rem;
+      border-radius: 1.5rem;
       overflow: hidden;
       position: relative;
     }
-
     #reader video {
       width: 100% !important;
       height: 100% !important;
       object-fit: cover !important; 
     }
-
     #reader__dashboard_section_csr span, #reader__dashboard_section_swaplink { display: none !important; }
   </style>
 </head>
 <body class="bg-[#f0f4f8] font-sans text-slate-800">
 
+  <!-- TOAST NOTIFICATION -->
   <div id="toast-notification" class="fixed top-5 left-1/2 -translate-x-1/2 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-500 -translate-y-24 opacity-0 pointer-events-none">
       <svg id="toast-icon" class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
       <span id="toast-message">Notifikasi</span>
   </div>
 
-  <!-- LAYAR SCANNER KAMERA -->
-  <div id="scanner-screen" class="fixed inset-0 bg-slate-950 z-[110] hidden flex-col items-center justify-center p-4 text-white">
-      <div class="w-full max-w-md space-y-6">
-          <div class="flex items-center justify-between px-2">
-              <button onclick="window.closeScanner()" class="p-2 md:p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-50">
-                  <svg class="w-6 h-6 md:w-7 md:h-7" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
+  <!-- LAYAR SCANNER LIVE -->
+  <div id="scanner-screen" class="fixed inset-0 bg-slate-950 z-[110] hidden flex-col items-center justify-center p-4 text-white backdrop-blur-md">
+      <div class="w-full max-w-md space-y-6 flex flex-col items-center">
+          <div class="flex items-center justify-between w-full px-2">
+              <button onclick="window.closeScanner()" class="p-3 bg-white/10 hover:bg-white/20 rounded-full transition-colors z-50">
+                  <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path d="M6 18L18 6M6 6l12 12" stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5"></path></svg>
               </button>
-              <div class="flex flex-col items-center text-center">
-                  <span class="font-black tracking-[0.3em] text-[10px] text-blue-400 animate-pulse">MEMINDAI...</span>
-                  <span id="scanner-subtitle" class="text-[9px] text-slate-500 font-bold uppercase mt-1">Area Gudang</span>
+              <div class="text-center">
+                  <span class="font-black tracking-[0.3em] text-[10px] text-blue-400 animate-pulse uppercase">Memindai Lokasi...</span>
+                  <p id="scanner-subtitle" class="text-[9px] text-slate-500 font-bold uppercase mt-1">Gudang LJR Logistics</p>
               </div>
-              <div class="w-10"></div>
+              <div class="w-12"></div>
           </div>
           
-          <div class="relative px-2 mx-auto w-full max-w-sm">
-              <div id="reader" class="border-4 border-slate-800 shadow-2xl z-10">
-                  <div class="absolute inset-0 flex items-center justify-center text-slate-500 text-xs">
-                      Menyiapkan kamera...
-                  </div>
+          <div class="relative w-full max-w-sm">
+              <div id="reader" class="border-4 border-slate-800 shadow-2xl">
+                  <div class="absolute inset-0 flex items-center justify-center text-slate-500 text-xs">Menghubungkan kamera...</div>
               </div>
-              
-              <!-- Bingkai Scanner Biru -->
-              <div class="absolute top-0 left-2 w-12 h-12 border-t-8 border-l-8 border-blue-500 rounded-tl-3xl z-20 pointer-events-none"></div>
-              <div class="absolute top-0 right-2 w-12 h-12 border-t-8 border-r-8 border-blue-500 rounded-tr-3xl z-20 pointer-events-none"></div>
-              <div class="absolute bottom-0 left-2 w-12 h-12 border-b-8 border-l-8 border-blue-500 rounded-bl-3xl z-20 pointer-events-none"></div>
-              <div class="absolute bottom-0 right-2 w-12 h-12 border-b-8 border-r-8 border-blue-500 rounded-br-3xl z-20 pointer-events-none"></div>
-              <div class="absolute left-2 right-2 h-1 bg-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,1)] animate-scan-line z-30 pointer-events-none"></div>
+              <div class="absolute top-0 left-0 w-12 h-12 border-t-8 border-l-8 border-blue-500 rounded-tl-[1.5rem] pointer-events-none z-20"></div>
+              <div class="absolute top-0 right-0 w-12 h-12 border-t-8 border-r-8 border-blue-500 rounded-tr-[1.5rem] pointer-events-none z-20"></div>
+              <div class="absolute bottom-0 left-0 w-12 h-12 border-b-8 border-l-8 border-blue-500 rounded-bl-[1.5rem] pointer-events-none z-20"></div>
+              <div class="absolute bottom-0 right-0 w-12 h-12 border-b-8 border-r-8 border-blue-500 rounded-br-[1.5rem] pointer-events-none z-20"></div>
+              <div class="absolute left-0 right-0 h-1 bg-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,1)] animate-scan-line pointer-events-none z-30"></div>
           </div>
-          
-          <div id="scan-error" class="text-center text-red-400 text-sm font-bold px-4 h-12"></div>
+          <div id="scan-error" class="text-center text-rose-500 text-xs font-bold px-4 h-12"></div>
       </div>
   </div>
 
@@ -81,17 +78,17 @@
     <!-- Header Mobile (Hanya tampil di HP) -->
     <div class="md:hidden flex justify-between items-center bg-white p-4 border-b border-slate-200 z-40 sticky top-0 shadow-sm">
       <h2 class="text-xl font-bold text-slate-900">WMS Menu</h2>
-      <button id="mobile-menu-btn" class="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 border border-slate-200 focus:outline-none">
+      <button onclick="toggleSidebar()" class="p-2 bg-slate-50 rounded-lg hover:bg-slate-100 border border-slate-200 focus:outline-none">
         <svg class="w-6 h-6 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
       </button>
     </div>
     
-    <div id="mobile-overlay" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 hidden transition-opacity"></div>
-    
-    <!-- Sidebar: Secara default ditambahkan md:hidden agar tersembunyi di Desktop -->
-    <div id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 z-40 w-64 bg-white border-r border-slate-200 sidebar-transition h-full overflow-y-auto shadow-lg md:shadow-none md:hidden">
-      <div class="p-6 hidden md:block border-b border-slate-100">
-        <h2 class="text-2xl font-black text-slate-900 tracking-tight">WMS<span class="text-blue-600">.</span></h2>
+    <div id="mobile-overlay" onclick="toggleSidebar()" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-30 hidden md:hidden"></div>
+
+    <!-- Sidebar: Disembunyikan (md:hidden) agar Dashboard tampil full -->
+    <div id="sidebar" class="fixed inset-y-0 left-0 transform -translate-x-full md:relative md:translate-x-0 z-40 w-64 bg-white border-r border-slate-200 transition-transform shadow-sm h-full overflow-y-auto md:hidden">
+      <div class="p-6 border-b border-slate-100">
+        <h2 class="text-2xl font-black text-slate-900 tracking-tighter">WMS<span class="text-blue-600">.</span></h2>
       </div>
       <div class="py-4 flex flex-col gap-1">
         <div id="menu-dashboard" onclick="switchMenu('Dashboard')" class="px-6 py-3 cursor-pointer font-semibold text-blue-700 bg-blue-50/50 border-r-4 border-blue-600 transition-colors">Dashboard</div>
@@ -101,172 +98,190 @@
     </div>
 
     <div class="flex-1 p-4 md:p-8 overflow-y-auto w-full relative">
+      <!-- Loading Overlay -->
       <div id="loading-overlay" class="absolute inset-0 bg-[#f0f4f8] z-20 flex flex-col items-center justify-center">
         <div class="loader mb-4"></div>
-        <p class="text-slate-500 font-medium animate-pulse">Menghubungkan ke Spreadsheet...</p>
+        <p class="text-slate-500 font-bold animate-pulse tracking-widest mt-2 text-sm uppercase">Menghubungkan Database...</p>
       </div>
 
-      <!-- Header Terintegrasi (Tombol Garis 3 + Judul + Horizontal Summary + Tombol Input) -->
-      <div class="mb-6 md:mb-8 flex flex-col xl:flex-row justify-between items-center gap-6">
+      <!-- Header & Horizontal Summary Terintegrasi -->
+      <div class="flex flex-col xl:flex-row justify-between items-center mb-8 gap-6">
         
-        <!-- Judul Dashboard & Tombol Garis 3 (Kiri) -->
+        <!-- Judul & Hamburger Menu -->
         <div class="shrink-0 w-full xl:w-auto flex items-center justify-center xl:justify-start gap-4">
-          <!-- Tombol Desktop Menu -->
-          <button onclick="toggleDesktopSidebar()" class="hidden md:flex p-2.5 bg-white rounded-lg shadow-sm border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none items-center justify-center">
+          <button onclick="toggleSidebar()" class="hidden md:flex p-2.5 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none items-center justify-center">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
-          
           <div class="text-center xl:text-left">
-            <h1 id="page-title" class="text-3xl font-bold text-slate-900 mb-1">Warehouse Dashboard</h1>
-            <p id="page-desc" class="text-slate-500 text-sm hidden md:block">Monitoring layout gudang dengan sistem racking dan Location management</p>
+            <h1 id="page-title" class="text-3xl font-black text-slate-900 mb-1 tracking-tight">Warehouse Dashboard</h1>
+            <p id="page-desc" class="text-slate-500 font-medium text-sm hidden md:block">Monitoring layout gudang dan utilisasi racking secara real-time</p>
           </div>
         </div>
 
         <!-- Summary Horizontal (Tengah) -->
         <div class="flex gap-4 w-full xl:w-auto overflow-x-auto hide-scrollbar flex-1 justify-start xl:justify-center px-1 py-1">
-          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[200px]">
-            <div class="text-xs font-medium text-slate-500 mb-1">Total Rack</div>
-            <div id="summary-total-rack" class="font-bold text-2xl text-slate-800">-</div>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[120px] flex-1 max-w-[160px]">
+            <div class="text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Total Rack</div>
+            <div id="summary-total-rack" class="font-black text-2xl text-slate-800">-</div>
           </div>
-          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px]">
-            <div class="text-xs font-medium text-slate-500 mb-1">Pallet Terpakai</div>
-            <div id="summary-used-pallet" class="font-bold text-2xl text-slate-800">- <span class="text-sm font-medium text-slate-500">pallet</span></div>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[180px]">
+            <div class="text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Pallet Terpakai</div>
+            <div id="summary-used-pallet" class="font-black text-2xl text-slate-800">- <span class="text-xs font-medium text-slate-500">pallet</span></div>
           </div>
-          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[160px] flex-1 max-w-[220px]">
-            <div class="text-xs font-medium text-slate-500 mb-1">Available Space</div>
-            <div id="summary-available" class="font-bold text-2xl text-slate-800">- <span class="text-sm font-medium text-slate-500">pallet</span></div>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[150px] flex-1 max-w-[200px]">
+            <div class="text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Available Space</div>
+            <div id="summary-available" class="font-black text-2xl text-slate-800">- <span class="text-xs font-medium text-slate-500">pallet</span></div>
           </div>
-          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px]">
-            <div class="text-xs font-medium text-slate-500 mb-1">Utilisasi Keseluruhan</div>
-            <div id="summary-utilization" class="font-bold text-2xl text-slate-800">0%</div>
+          <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[130px] flex-1 max-w-[180px]">
+            <div class="text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Utilisasi</div>
+            <div id="summary-utilization" class="font-black text-2xl text-slate-800">0%</div>
           </div>
         </div>
 
-        <!-- Tombol Input Location (Kanan) -->
-        <div class="shrink-0 w-full xl:w-auto flex justify-center xl:justify-end">
-          <button id="btn-open-modal" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-lg text-sm font-medium flex items-center gap-2 shadow-sm transition-all whitespace-nowrap">
-            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+        <!-- Tombol Aksi Kanan -->
+        <div class="shrink-0 w-full xl:w-auto flex flex-wrap justify-center xl:justify-end gap-3 items-center">
+          
+          <!-- Tombol Export/Import (Hanya tampil di Dashboard) -->
+          <div id="dashboard-action-buttons" class="flex flex-wrap justify-center gap-2 transition-all">
+            <button class="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors shadow-sm whitespace-nowrap">Template</button>
+            <button class="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors shadow-sm whitespace-nowrap">Upload Data</button>
+            <button class="px-4 py-2.5 bg-white border border-slate-200 text-slate-700 rounded-lg text-sm font-bold hover:bg-slate-50 transition-colors shadow-sm whitespace-nowrap">Download Data</button>
+          </div>
+
+          <button onclick="openModal()" class="bg-[#1e293b] hover:bg-[#0f172a] text-white px-5 py-2.5 rounded-lg shadow-md text-sm font-bold flex items-center gap-2 transition-all whitespace-nowrap">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"></path></svg>
             Input Location
           </button>
         </div>
       </div>
 
-      <!-- Konten Utama (Kini Lebar Penuh/Full Width) -->
-      <div class="flex flex-col gap-6">
-        
-        <!-- Layout Gudang Section -->
-        <div id="section-layout" class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm">
+      <!-- Section: Visualisasi Rak -->
+      <div id="section-layout" class="mb-8">
+        <div class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm">
           <div class="flex justify-between items-center mb-6">
-            <h2 class="font-bold text-xl text-slate-800">Visual Racking</h2>
-            <div id="sync-indicator" class="hidden text-xs font-semibold text-emerald-600 animate-pulse flex items-center gap-1">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Live Sync Active
-            </div>
+            <h2 class="font-bold text-xl text-slate-800">Visualisasi Rak</h2>
           </div>
-          <!-- Grid dibentangkan lebih luas hingga 5 kolom di monitor besar -->
           <div id="rack-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6"></div>
         </div>
+      </div>
 
-        <!-- Warehouse Management Section -->
-        <div id="section-container" class="bg-white border border-slate-200/60 rounded-2xl p-7 shadow-sm relative">
-          <div class="flex justify-between items-center mb-6">
-            <h2 class="font-bold text-xl text-slate-800">Warehouse Management</h2>
-          </div>
-          <div class="overflow-x-auto rounded-xl border border-slate-100">
-            <table class="w-full text-left border-collapse min-w-[1000px]">
-              <thead class="bg-slate-50/50 border-b border-slate-200">
-                <tr class="text-sm">
-                  <th class="py-4 px-5 font-semibold text-slate-700">Location</th>
-                  <th class="py-4 px-5 font-semibold text-slate-700">Licence Plate</th>
-                  <th class="py-4 px-5 font-semibold text-slate-700">Rack</th>
-                  <th class="py-4 px-5 font-semibold text-slate-700">Row</th>
-                  <th class="py-4 px-5 font-semibold text-slate-700">Level</th>
-                  <th class="py-4 px-5 font-semibold text-slate-700">Qty</th>
-                  <th class="py-4 px-5 font-semibold text-slate-700">Jenis</th>
-                  <th class="py-4 px-5 font-semibold text-slate-700">Tanggal</th>
-                  <th class="py-4 px-5 font-semibold text-slate-700">Status</th>
-                </tr>
-              </thead>
-              <tbody id="container-table-body"></tbody>
-            </table>
-          </div>
+      <!-- Section: Table Data History -->
+      <div id="section-container" class="bg-white border border-slate-200 rounded-2xl p-6 shadow-sm overflow-hidden">
+        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h2 class="font-bold text-xl text-slate-800">Warehouse Management</h2>
         </div>
-
-      </div> <!-- Akhir Konten Utama -->
+        <div class="overflow-x-auto rounded-xl border border-slate-100">
+          <table class="w-full text-left border-collapse min-w-[1000px]">
+            <thead class="bg-slate-50/50 border-b border-slate-200">
+              <tr class="text-sm">
+                <th class="py-4 px-5 font-semibold text-slate-700">Location</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Licence Plate</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Rack</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Row</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Level</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Qty</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Jenis</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Tanggal</th>
+                <th class="py-4 px-5 font-semibold text-slate-700">Status</th>
+              </tr>
+            </thead>
+            <tbody id="table-body" class="divide-y divide-slate-50"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </div>
 
-  <!-- Modal Form -->
-  <div id="input-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
-    <div id="modal-backdrop" class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm"></div>
-    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl mx-4 relative z-10 overflow-hidden flex flex-col max-h-[90vh] overflow-y-auto">
-      <div class="px-6 py-4 border-b border-slate-100 flex justify-between items-center bg-slate-50/50 sticky top-0 z-20">
-        <h3 class="text-lg font-bold text-slate-800">Input Location Baru</h3>
-        <button id="btn-close-modal" class="text-slate-400 hover:text-slate-600"><svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg></button>
+  <!-- Modal Input Lengkap -->
+  <div id="input-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden p-4">
+    <div class="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onclick="closeModal()"></div>
+    <div class="bg-white rounded-2xl shadow-xl w-full max-w-2xl relative z-10 overflow-hidden flex flex-col max-h-[90vh]">
+      <div class="px-6 py-4 border-b border-slate-100 flex justify-between bg-slate-50/50 items-center">
+        <h3 class="font-bold text-lg text-slate-800">Input Location Baru</h3>
+        <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+        </button>
       </div>
-      <form id="form-container" class="p-6 flex flex-col gap-5">
+      
+      <form id="form-container" class="p-6 space-y-5 overflow-y-auto">
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Location</label>
+          <div class="space-y-1">
+            <label class="block text-sm font-medium text-slate-700">Location</label>
             <div class="flex gap-2">
-              <input type="text" id="input-location" required readonly class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-100 text-slate-500 focus:outline-none cursor-not-allowed">
-              <button type="button" onclick="window.startScan('location')" class="px-4 bg-slate-800 text-white rounded-lg flex items-center gap-2 whitespace-nowrap">Scan Live</button>
+              <input type="text" id="input-location" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:border-blue-500 outline-none">
+              <button type="button" onclick="startScan('location')" class="bg-slate-800 text-white px-4 rounded-lg text-sm flex items-center gap-2">Scanner</button>
             </div>
           </div>
-          <div>
-            <label class="block text-sm font-medium text-slate-700 mb-1">Licence Plate</label>
+          <div class="space-y-1">
+            <label class="block text-sm font-medium text-slate-700">Licence Plate</label>
             <div class="flex gap-2">
-              <input type="text" id="input-licence" required readonly class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-100 text-slate-500 focus:outline-none cursor-not-allowed">
-              <button type="button" onclick="window.startScan('licence')" class="px-4 bg-slate-800 text-white rounded-lg flex items-center gap-2 whitespace-nowrap">Scan Live</button>
+              <input type="text" id="input-licence" required class="w-full px-4 py-2 border border-slate-200 rounded-lg focus:border-blue-500 outline-none">
+              <button type="button" onclick="startScan('licence')" class="bg-slate-800 text-white px-4 rounded-lg text-sm flex items-center gap-2">Scanner</button>
             </div>
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 bg-slate-50 p-4 rounded-xl">
+
+        <div class="bg-slate-50 p-4 rounded-xl grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Rack</label>
-            <select id="input-rak" class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-200 text-slate-500 pointer-events-none appearance-none" tabindex="-1"></select>
+            <select id="input-rak" required class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
+              <option value="" disabled selected>Pilih Rak...</option>
+            </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Row</label>
-            <input type="text" id="input-row" required readonly class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-200 text-slate-500 focus:outline-none cursor-not-allowed">
+            <input type="text" id="input-row" required class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-700 mb-1">Level</label>
-            <select id="input-level" class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-slate-200 text-slate-500 pointer-events-none appearance-none" tabindex="-1">
-              <option value="1">Level 1</option><option value="2">Level 2</option><option value="3">Level 3</option><option value="4">Level 4</option><option value="5">Level 5</option><option value="6">Level 6</option>
+            <select id="input-level" required class="w-full bg-white border border-slate-200 rounded-lg px-4 py-2 outline-none">
+              <option value="" disabled selected>Pilih Level...</option>
             </select>
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="block text-sm font-medium text-slate-700 mb-1">Qty</label><input type="number" id="input-qty" required class="w-full px-4 py-2 border border-slate-200 rounded-lg"></div>
-          <div><label class="block text-sm font-medium text-slate-700 mb-1">Jenis</label>
-            <select id="input-jenis" class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-white"><option value="Masuk">Masuk (Inbound)</option><option value="Keluar">Keluar (Outbound)</option></select>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Qty</label>
+            <input type="number" id="input-qty" value="10" required class="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Jenis</label>
+            <select id="input-jenis" class="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none bg-white">
+              <option value="Masuk">Masuk (Inbound)</option>
+              <option value="Keluar">Keluar (Outbound)</option>
+            </select>
           </div>
         </div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div><label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
-            <select id="input-status" class="w-full px-4 py-2 border border-slate-200 rounded-lg bg-white"><option value="Received">Received</option><option value="Dispatched">Dispatched</option><option value="Pending">Pending</option></select>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Status</label>
+            <select id="input-status" class="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none bg-white">
+              <option>Received</option><option>Dispatched</option><option>Pending</option>
+            </select>
           </div>
-          <div><label class="block text-sm font-medium text-slate-700 mb-1">Tanggal</label><input type="date" id="input-tanggal" required class="w-full px-4 py-2 border border-slate-200 rounded-lg"></div>
+          <div>
+            <label class="block text-sm font-medium text-slate-700 mb-1">Tanggal</label>
+            <input type="date" id="input-tanggal" required class="w-full px-4 py-2 border border-slate-200 rounded-lg outline-none">
+          </div>
         </div>
-        <div class="mt-4 flex gap-3 justify-end pt-4"><button type="submit" id="btn-submit-modal" class="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg">Simpan Data</button></div>
+
+        <div class="mt-4 flex gap-3 justify-end pt-4">
+          <button type="submit" id="btn-submit" class="w-full sm:w-auto px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium shadow-sm transition-all">
+            Simpan Data
+          </button>
+        </div>
       </form>
     </div>
   </div>
 
   <script>
-    // --- GANTI DENGAN URL DEPLOYMENT BARU ANDA (SETELAH UPDATE KODE.GS) ---
-    const GAS_URL = "https://script.google.com/macros/s/AKfycbzbLEtCcp1s31HabjmWtX3gXhDWz8mkziwHKfb3J5Ip_3ITVHdDHBwsQIV-HoThqNc2/exec";
+    // URL Web App GAS Anda - PASTIKAN MENGGUNAKAN VERSI TERBARU (V36+)
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbznaOvcN4Q96TVJGQtTNYBV8Bt-GzFoLg-sZxSaAfvNB6cVX-U1b-E8VZnqLrl9667H/exec";
     
-    // Default config 
-    let rackData = [
-      { title: 'Rack AA', total: 100, levels: 6 },
-      { title: 'Rack BB', total: 100, levels: 6 },
-      { title: 'Rack CC', total: 120, levels: 6 },
-      { title: 'Rack DD', total: 120, levels: 6 },
-      { title: 'Rack EE', total: 80, levels: 6 },
-      { title: 'Rack FF', total: 80, levels: 6 },
-    ];
     let containerData = [];
+    let rackConfig = []; 
 
     function playBeep() {
       try {
@@ -279,124 +294,101 @@
       } catch (e) {}
     }
 
-    // Variabel untuk mengamankan timeout notifikasi agar tidak bentrok
-    let toastTimeout;
-    function showToast(message, type = 'success') {
-      const toast = document.getElementById('toast-notification');
-      document.getElementById('toast-message').innerText = message;
-      
-      // Mengubah warna berdasarkan tipe info
-      let bgColorClass = 'bg-emerald-600'; // Default success
-      if (type === 'error') bgColorClass = 'bg-red-600';
-      else if (type === 'info') bgColorClass = 'bg-blue-600'; // Warna untuk proses loading
-
-      toast.className = `fixed top-5 left-1/2 -translate-x-1/2 md:left-auto md:-translate-x-0 md:right-5 z-[9999] flex items-center gap-3 px-6 py-4 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 ${bgColorClass}`;
-      
-      toast.classList.remove('-translate-y-24', 'opacity-0');
-      
-      if (toastTimeout) clearTimeout(toastTimeout);
-      toastTimeout = setTimeout(() => { 
-        toast.classList.add('-translate-y-24', 'opacity-0'); 
-      }, 4000);
+    function showToast(msg, type='success') {
+      const t = document.getElementById('toast-notification');
+      document.getElementById('toast-message').innerText = msg;
+      t.className = `fixed top-5 left-1/2 -translate-x-1/2 z-[9999] px-6 py-3 rounded-xl shadow-2xl text-white font-medium transform transition-all duration-300 ${type==='success' ? 'bg-emerald-600' : 'bg-red-600'}`;
+      t.classList.remove('-translate-y-24', 'opacity-0');
+      setTimeout(()=> t.classList.add('-translate-y-24', 'opacity-0'), 3500);
     }
 
-    // --- HTML5-QRCode LIVE SCANNER ---
-    let html5QrCode = null;
-    let currentScanTarget = '';
-
-    window.startScan = function(target) {
-        currentScanTarget = target;
-        const errorElement = document.getElementById('scan-error');
-        errorElement.innerHTML = '';
-        
-        const scannerScreen = document.getElementById('scanner-screen');
-        scannerScreen.classList.remove('hidden');
-        scannerScreen.style.display = 'flex';
-        
-        // Memperbarui petunjuk jenis scan
-        const subtitle = document.getElementById('scanner-subtitle');
-        if (subtitle) {
-          subtitle.innerText = target === 'licence' ? 'SCAN LICENCE PLATE (LP-...)' : 'SCAN LOKASI RAK';
-        }
-
-        setTimeout(() => {
-            document.getElementById('reader').innerHTML = '';
-
-            if (!html5QrCode) {
-                html5QrCode = new window.Html5Qrcode("reader");
-            }
-
-            const qrConfig = { fps: 10, qrbox: { width: 250, height: 250 } };
-            
-            const onSuccess = (decodedText) => {
-                const scannedText = decodedText.trim();
-                const isLicencePlate = scannedText.toUpperCase().startsWith('LP-');
-
-                // LOGIKA PENOLAKAN LANGSUNG DARI KAMERA
-                if (currentScanTarget === 'licence' && !isLicencePlate) {
-                  document.getElementById('scan-error').innerHTML = "✖ <b>DITOLAK!</b> Ini bukan QR Licence Plate (Wajib awalan LP-)";
-                  return; // Hentikan eksekusi, Kamera tetap menyala!
-                }
-
-                if (currentScanTarget === 'location' && isLicencePlate) {
-                  document.getElementById('scan-error').innerHTML = "✖ <b>DITOLAK!</b> Ini QR Licence Plate, harap scan QR Lokasi!";
-                  return; // Hentikan eksekusi, Kamera tetap menyala!
-                }
-
-                // Jika Valid, loloskan dan tutup kamera
-                errorElement.innerHTML = '';
-                playBeep();
-                showToast(`Berhasil dipindai: ${scannedText}`, 'success');
-
-                const targetInputId = currentScanTarget === 'location' ? 'input-location' : 'input-licence';
-                document.getElementById(targetInputId).value = scannedText;
-
-                if (currentScanTarget === 'location') {
-                  parseLocationData(scannedText);
-                }
-                window.closeScanner();
-            };
-
-            html5QrCode.start({ facingMode: "environment" }, qrConfig, onSuccess, () => {})
-            .catch((err) => {
-                html5QrCode.start({ facingMode: "user" }, qrConfig, onSuccess, () => {})
-                .catch((err2) => {
-                    errorElement.innerHTML = "Akses kamera diblokir. Harap izinkan akses kamera di Browser Anda.";
-                });
-            });
-            
-        }, 300);
+    // --- MENGISI DROPDOWN RAK & LEVEL OTOMATIS SESUAI SHEET 2 ---
+    function populateRackOptions() {
+      const rakSelect = document.getElementById('input-rak');
+      const currentVal = rakSelect.value;
+      rakSelect.innerHTML = '<option value="" disabled selected>Pilih Rak...</option>';
+      
+      rackConfig.forEach(rack => {
+        const opt = document.createElement('option');
+        opt.value = rack.id;
+        opt.textContent = rack.id;
+        rakSelect.appendChild(opt);
+      });
+      if(currentVal) rakSelect.value = currentVal;
     }
 
-    window.closeScanner = () => {
-        if (html5QrCode) {
-            try {
-                html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(() => {});
-            } catch(e) {}
-        }
-        const scannerScreen = document.getElementById('scanner-screen');
-        scannerScreen.style.display = 'none';
-        scannerScreen.classList.add('hidden');
-    };
-
-    function parseLocationData(qrText) {
-      let parts = qrText.split(/[\.\-\,]/).map(s => s.trim());
-      if (parts.length >= 3) {
-        let rackCode = parts[0]; let rowCode = parts[1]; let levelCode = parts[2];
-        if (!rackCode.toLowerCase().startsWith('rack')) rackCode = 'Rack ' + rackCode;
-
-        let rakSelect = document.getElementById('input-rak');
-        let optionFound = Array.from(rakSelect.options).some(opt => { if (opt.value.toUpperCase() === rackCode.toUpperCase()) { rakSelect.value = opt.value; return true; } return false; });
-        if (!optionFound) { const newOpt = document.createElement('option'); newOpt.value = rackCode; newOpt.textContent = rackCode; rakSelect.appendChild(newOpt); rakSelect.value = rackCode; }
-
-        document.getElementById('input-row').value = rowCode;
-        let levelSelect = document.getElementById('input-level');
-        let levelFound = Array.from(levelSelect.options).some(opt => { if (opt.value === levelCode) { levelSelect.value = opt.value; return true; } return false; });
-        if (!levelFound) { const newOpt = document.createElement('option'); newOpt.value = levelCode; newOpt.textContent = 'Level ' + levelCode; levelSelect.appendChild(newOpt); levelSelect.value = levelCode; }
+    function updateLevelDropdown() {
+      const rakSelect = document.getElementById('input-rak');
+      const levelSelect = document.getElementById('input-level');
+      const selectedRackId = rakSelect.value;
+      
+      const selectedRack = rackConfig.find(r => r.id === selectedRackId);
+      const maxLevel = selectedRack ? (Number(selectedRack.levels) || 6) : 6;
+      
+      const currentLevel = levelSelect.value;
+      levelSelect.innerHTML = '<option value="" disabled selected>Pilih Level...</option>';
+      
+      for (let i = maxLevel; i >= 1; i--) {
+          const opt = document.createElement('option');
+          opt.value = i;
+          opt.textContent = 'Level ' + i;
+          levelSelect.appendChild(opt);
+      }
+      
+      // Pertahankan pilihan sebelumnya jika masih valid di rak baru
+      if (currentLevel && Number(currentLevel) <= maxLevel) {
+          levelSelect.value = currentLevel;
       }
     }
 
-    // --- FUNGSI FORMAT TANGGAL BARU (dd-mmm-yyyy) ---
+    // Listener ketika Rak dipilih, maka jumlah Level menyesuaikan
+    document.getElementById('input-rak').addEventListener('change', updateLevelDropdown);
+
+    // --- FUNGSI PARSING LOKASI RAK ---
+    function parseLocationData(qrText) {
+      let parts = qrText.split(/[\.\-\,]/).map(s => s.trim());
+      
+      if (parts.length >= 3) {
+        let rackCode = parts[0].toUpperCase(); 
+        let rowCode = parts[1];                
+        let levelCode = parts[2];              
+
+        if (rackCode.startsWith('RACK ')) rackCode = rackCode.replace('RACK ', '');
+
+        // Auto Select Rak
+        let rakSelect = document.getElementById('input-rak');
+        let rackOption = Array.from(rakSelect.options).find(opt => opt.value.toUpperCase() === rackCode.toUpperCase());
+        if (rackOption) {
+          rakSelect.value = rackOption.value;
+        } else {
+          const newOpt = document.createElement('option'); 
+          newOpt.value = rackCode; 
+          newOpt.textContent = rackCode; 
+          rakSelect.appendChild(newOpt); 
+          rakSelect.value = rackCode;
+        }
+
+        // Auto Select Row
+        document.getElementById('input-row').value = rowCode;
+
+        // Panggil updateLevelDropdown agar list opsi Level terbuat sebelum diset
+        updateLevelDropdown();
+
+        // Auto Select Level
+        let levelSelect = document.getElementById('input-level');
+        let levelOption = Array.from(levelSelect.options).find(opt => opt.value === levelCode);
+        if (levelOption) {
+          levelSelect.value = levelOption.value;
+        } else {
+          const newOpt = document.createElement('option'); 
+          newOpt.value = levelCode; 
+          newOpt.textContent = 'Level ' + levelCode; 
+          levelSelect.appendChild(newOpt); 
+          levelSelect.value = levelCode;
+        }
+      }
+    }
+
     function formatDate(dateString) {
       if (!dateString) return '-';
       const date = new Date(dateString);
@@ -407,170 +399,11 @@
       const month = months[date.getMonth()];
       const year = date.getFullYear();
       
-      // Format output menjadi: "10-Mei-2026"
       return `${day}-${month}-${year}`;
     }
 
-    // --- FUNGSI TOGGLE UNTUK DESKTOP SIDEBAR ---
-    function toggleDesktopSidebar() {
-      const sidebar = document.getElementById('sidebar');
-      sidebar.classList.toggle('md:hidden');
-      sidebar.classList.toggle('md:block');
-    }
-
-    function switchMenu(selectedMenu) {
-      const menus = ['Dashboard', 'Layout Rack', 'Warehouse Management'];
-      menus.forEach(menu => {
-        const safeId = 'menu-' + menu.toLowerCase().replace(/\s+/g, '-');
-        const element = document.getElementById(safeId);
-        if (element) {
-            if (menu === selectedMenu) {
-              element.className = 'px-6 py-3 cursor-pointer font-semibold text-blue-700 bg-blue-50/50 border-r-4 border-blue-600 transition-colors';
-            } else {
-              element.className = 'px-6 py-3 cursor-pointer font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-r-4 border-transparent transition-colors';
-            }
-        }
-      });
-
-      const secLayout = document.getElementById('section-layout');
-      const secContainer = document.getElementById('section-container');
-
-      if (selectedMenu === 'Dashboard') {
-        secLayout.classList.remove('hidden'); secContainer.classList.remove('hidden');
-      } else if (selectedMenu === 'Layout Rack') {
-        secLayout.classList.remove('hidden'); secContainer.classList.add('hidden');
-      } else if (selectedMenu === 'Warehouse Management') {
-        secLayout.classList.add('hidden'); secContainer.classList.remove('hidden');
-      }
-
-      if (window.innerWidth < 768) {
-        document.getElementById('sidebar').classList.add('-translate-x-full'); document.getElementById('mobile-overlay').classList.add('hidden');
-      }
-    }
-
-    function renderSummary() {
-      let totalCap = 0, totalFilledSlots = 0;
-      
-      rackData.forEach(rack => { 
-        const maxLevel = Number(rack.levels) || 6;
-        const palletsPerLevel = Math.round((Number(rack.total) || 100) / maxLevel);
-        totalCap += Number(rack.total) || 0; 
-        
-        let rackFilled = 0;
-        for (let lvl = 1; lvl <= maxLevel; lvl++) {
-          const rowNet = {};
-          containerData.forEach(d => {
-            if (d.rack === rack.title && Number(d.level) === lvl) {
-              let r = parseInt(d.row, 10);
-              if (!isNaN(r)) rowNet[r] = (rowNet[r] || 0) + (d.jenis === 'Masuk' ? (parseInt(d.qty)||1) : -(parseInt(d.qty)||1));
-            }
-          });
-          
-          for (let s = 1; s <= palletsPerLevel; s++) {
-            if (rowNet[s] > 0) rackFilled++;
-          }
-        }
-        totalFilledSlots += rackFilled;
-      });
-      
-      document.getElementById('summary-total-rack').innerText = rackData.length;
-      document.getElementById('summary-used-pallet').innerHTML = `${totalFilledSlots} <span class="text-sm font-medium text-slate-500">pallet</span>`;
-      document.getElementById('summary-utilization').innerText = totalCap > 0 ? `${Math.round((totalFilledSlots / totalCap) * 100)}%` : '0%';
-      document.getElementById('summary-available').innerHTML = `${totalCap - totalFilledSlots} <span class="text-sm font-medium text-slate-500">pallet</span>`;
-    }
-
-    function renderRacks() {
-      const container = document.getElementById('rack-container'); container.innerHTML = '';
-      
-      // Menerapkan warna persis sesuai PDF yang diunggah
-      const colorMap = {
-        10: 'bg-[#4bc0d9]', 9: 'bg-[#4bc0d9]', 8: 'bg-[#4bc0d9]', 7: 'bg-[#4bc0d9]',     
-        6: 'bg-[#4bc0d9]',    // Level 6 (Cyan/Biru Muda)
-        5: 'bg-[#8c8c8c]',    // Level 5 (Abu-abu)
-        4: 'bg-[#ff9900]',    // Level 4 (Oranye)
-        3: 'bg-[#ff0000]',    // Level 3 (Merah)
-        2: 'bg-[#38761d]',    // Level 2 (Hijau)
-        1: 'bg-[#0000ff]'     // Level 1 (Biru Tua)
-      };
-
-      rackData.forEach(rack => {
-        const maxLevel = Number(rack.levels) || 6; 
-        const totalCap = Number(rack.total) || 100;
-        const palletsPerLevel = Math.round(totalCap / maxLevel);
-
-        let rackFilledSlots = 0;
-        let barsHtml = '';
-        
-        for (let i = 0; i < maxLevel; i++) {
-          const levelNum = maxLevel - i; 
-          const colorClass = colorMap[levelNum] || 'bg-slate-500';
-          
-          const rowNet = {};
-          containerData.forEach(d => {
-            if (d.rack === rack.title && Number(d.level) === levelNum) {
-              let r = parseInt(d.row, 10);
-              if (!isNaN(r)) {
-                rowNet[r] = (rowNet[r] || 0) + (d.jenis === 'Masuk' ? (parseInt(d.qty)||1) : -(parseInt(d.qty)||1));
-              }
-            }
-          });
-
-          let slotsHtml = '';
-          for (let s = 1; s <= palletsPerLevel; s++) {
-            const isFilled = rowNet[s] > 0;
-            if (isFilled) rackFilledSlots++;
-            // Kotak-kotak (slot) berwarna berdasarkan Row (posisi palet)
-            slotsHtml += `<div class="flex-1 h-full ${isFilled ? colorClass : 'bg-transparent'} border-r border-slate-300/30 last:border-r-0 transition-colors duration-300"></div>`;
-          }
-          
-          barsHtml += `
-            <div class="flex items-center gap-3 mb-2 last:mb-0">
-              <div class="w-7 h-7 flex items-center justify-center text-sm font-bold text-white rounded shadow-sm shrink-0 ${colorClass}">${levelNum}</div>
-              <div class="h-4 w-full flex bg-slate-200/80 rounded-sm relative overflow-hidden shadow-inner">
-                ${slotsHtml}
-              </div>
-            </div>`;
-        }
-        
-        const usagePercentage = Math.min(100, Math.max(0, Math.round((rackFilledSlots / totalCap) * 100)));
-        let badgeColor = usagePercentage >= 90 ? 'bg-red-100 text-red-700' : usagePercentage >= 60 ? 'bg-amber-100 text-amber-700' : usagePercentage === 0 ? 'bg-slate-100 text-slate-500' : 'bg-emerald-100 text-emerald-700';
-
-        container.innerHTML += `
-          <div class="border border-slate-200 rounded-xl bg-white flex flex-col justify-between hover:shadow-md transition-all">
-            <div class="p-5 border-b border-slate-100 flex justify-between items-start">
-              <div>
-                <h3 class="font-bold text-lg text-slate-800">${rack.title}</h3>
-                <span class="inline-block px-2 rounded text-xs font-bold mt-1 ${badgeColor}">${usagePercentage}% TERISI</span>
-              </div>
-              <div class="text-right">
-                <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Kapasitas</div>
-                <div class="text-sm font-bold text-slate-700"><span class="text-slate-900">${rackFilledSlots}</span> / ${totalCap}</div>
-              </div>
-            </div>
-            <div class="p-5 bg-slate-50 rounded-b-xl flex-1 flex flex-col justify-end">
-              ${barsHtml}
-            </div>
-          </div>`;
-      });
-    }
-
-    function renderTable() {
-      const tbody = document.getElementById('container-table-body'); tbody.innerHTML = '';
-      if (containerData.length === 0) return tbody.innerHTML = `<tr><td colspan="9" class="py-6 text-center text-slate-400 text-sm">Belum ada data.</td></tr>`;
-      containerData.forEach(item => {
-        const statusColor = item.status === 'Received' ? 'text-emerald-700 bg-emerald-50' : item.status === 'Dispatched' ? 'text-blue-700 bg-blue-50' : 'text-amber-700 bg-amber-50';
-        // Memanggil fungsi formatDate untuk setiap item tanggal
-        const formattedDate = formatDate(item.tanggal);
-        
-        // Memformat Row agar selalu tampil 3 digit (Contoh: 1 menjadi 001, 10 menjadi 010)
-        const formattedRow = item.row ? String(item.row).padStart(3, '0') : '-';
-
-        tbody.innerHTML += `<tr class="border-b border-slate-100 text-sm"><td class="py-4 px-5 font-semibold">${item.location || '-'}</td><td class="py-4 px-5">${item.licencePlate || '-'}</td><td class="py-4 px-5">${item.rack || '-'}</td><td class="py-4 px-5">${formattedRow}</td><td class="py-4 px-5 font-bold">${item.level || '-'}</td><td class="py-4 px-5 text-blue-600">${item.qty || 0}</td><td class="py-4 px-5">${item.jenis}</td><td class="py-4 px-5">${formattedDate}</td><td class="py-4 px-5"><span class="px-3 py-1.5 rounded-md border text-xs font-semibold ${statusColor}">${item.status}</span></td></tr>`;
-      });
-    }
-
-    // --- MENGGUNAKAN API UNTUK BACKEND ---
-    async function loadInitialData() {
+    // --- FUNGSI AMBIL DATA TRANSAKSI & CONFIG RAK SHEET 2 ---
+    async function loadData() {
       try {
         const urlToFetch = GAS_URL + "?t=" + Date.now();
         const response = await fetch(urlToFetch);
@@ -580,20 +413,17 @@
         if (data.transactions && data.rackConfigs) {
             containerData = data.transactions || [];
             if (data.rackConfigs.length > 0) {
-                rackData = data.rackConfigs.map(r => ({
-                    title: r.id.startsWith('Rack') ? r.id : 'Rack ' + r.id,
-                    total: parseInt(r.total) || 100,
-                    levels: parseInt(r.levels) || 6
-                }));
+                rackConfig = data.rackConfigs; 
                 populateRackOptions(); 
             }
         } else {
+            // Backup jika Google Script lama masih aktif
             containerData = data || [];
         }
         
-        renderSummary();
         renderRacks();
         renderTable();
+        renderSummary();
       } catch (err) {
         console.error("Gagal load data:", err);
       } finally {
@@ -601,122 +431,279 @@
       }
     }
 
-    // --- FITUR AUTO-SYNC BACKGROUND (MENGATASI DELAY PADA LAPTOP) ---
-    async function fetchDataSilently() {
-      try {
-        const urlToFetch = GAS_URL + "?t=" + Date.now();
-        const response = await fetch(urlToFetch);
-        const data = await response.json();
-        
-        if (data.transactions && data.rackConfigs) {
-            containerData = data.transactions || [];
-            if (data.rackConfigs.length > 0) {
-                rackData = data.rackConfigs.map(r => ({
-                    title: r.id.startsWith('Rack') ? r.id : 'Rack ' + r.id,
-                    total: parseInt(r.total) || 100,
-                    levels: parseInt(r.levels) || 6
-                }));
-            }
-        } else {
-            containerData = data || [];
-        }
-        
-        renderSummary();
-        renderRacks();
-        renderTable();
-        
-        // Tampilkan indikator "Live Sync Active" secara halus
-        const syncInd = document.getElementById('sync-indicator');
-        if(syncInd) {
-            syncInd.classList.remove('hidden');
-            setTimeout(() => syncInd.classList.add('hidden'), 2000);
-        }
-      } catch (err) {
-        console.error("Silent sync failed:", err);
-      }
+    function renderSummary() {
+      let totalCap = 0, totalCur = 0;
+      rackConfig.forEach(rack => { 
+        totalCap += Number(rack.total) || 0; 
+        const currentQty = containerData.filter(d => d.rack === rack.id).reduce((sum, item) => item.jenis === 'Masuk' ? sum + Number(item.qty) : sum - Number(item.qty), 0);
+        totalCur += currentQty; 
+      });
+      document.getElementById('summary-total-rack').innerText = rackConfig.length;
+      document.getElementById('summary-used-pallet').innerHTML = `${totalCur} <span class="text-sm font-medium text-slate-500">pallet</span>`;
+      document.getElementById('summary-utilization').innerText = totalCap > 0 ? `${Math.round((totalCur / totalCap) * 100)}%` : '0%';
+      document.getElementById('summary-available').innerHTML = `${totalCap - totalCur} <span class="text-sm font-medium text-slate-500">pallet</span>`;
     }
 
-    function populateRackOptions() {
-      const selectRak = document.getElementById('input-rak'); selectRak.innerHTML = '';
-      rackData.forEach(rack => { const option = document.createElement('option'); option.value = rack.title; option.textContent = rack.title; selectRak.appendChild(option); });
+    function renderTable() {
+      const body = document.getElementById('table-body');
+      body.innerHTML = containerData.length === 0 ? '<tr><td colspan="9" class="p-8 text-center text-slate-400">Belum ada data.</td></tr>' : '';
+      containerData.forEach(d => {
+        const statusColor = d.status === 'Received' ? 'text-emerald-700 bg-emerald-50' : d.status === 'Dispatched' ? 'text-blue-700 bg-blue-50' : 'text-amber-700 bg-amber-50';
+        const formattedDate = formatDate(d.tanggal); 
+
+        body.innerHTML += `
+          <tr class="text-sm hover:bg-slate-50 transition-colors">
+            <td class="py-4 px-5 font-semibold text-slate-900">${d.location || '-'}</td>
+            <td class="py-4 px-5 text-slate-600">${d.licencePlate || '-'}</td>
+            <td class="py-4 px-5 text-slate-600 font-bold">Rack ${d.rack || '-'}</td>
+            <td class="py-4 px-5 text-slate-600 font-medium">${d.row || '-'}</td>
+            <td class="py-4 px-5 text-slate-600 font-bold">${d.level || '-'}</td>
+            <td class="py-4 px-5 text-blue-600 font-bold">${d.qty || '0'}</td>
+            <td class="py-4 px-5 text-slate-600">${d.jenis || '-'}</td>
+            <td class="py-4 px-5 text-slate-600">${formattedDate}</td>
+            <td class="py-4 px-5"><span class="px-3 py-1.5 rounded-md border text-xs font-semibold ${statusColor}">${d.status || 'Pending'}</span></td>
+          </tr>`;
+      });
     }
 
-    const modal = document.getElementById('input-modal'), form = document.getElementById('form-container');
-    document.getElementById('btn-open-modal').addEventListener('click', () => { populateRackOptions(); document.getElementById('input-tanggal').valueAsDate = new Date(); modal.classList.remove('hidden'); });
-    document.getElementById('btn-close-modal').addEventListener('click', () => { modal.classList.add('hidden'); form.reset(); });
-
-    form.addEventListener('submit', function(e) {
-      e.preventDefault();
-
-      const locVal = document.getElementById('input-location').value.trim();
-      const licVal = document.getElementById('input-licence').value.trim();
-
-      // VERIFIKASI KEAMANAN SAAT SUBMIT MANUAL
-      if (locVal.toUpperCase().startsWith('LP-')) {
-        showToast("✖ DITOLAK! Location tidak boleh berawalan LP-", "error");
-        return;
-      }
-      if (!licVal.toUpperCase().startsWith('LP-')) {
-        showToast("✖ DITOLAK! Licence Plate wajib berawalan LP-", "error");
-        return;
-      }
-
-      const newData = {
-        location: locVal, licencePlate: licVal,
-        rack: document.getElementById('input-rak').value, row: document.getElementById('input-row').value, level: document.getElementById('input-level').value,
-        qty: parseInt(document.getElementById('input-qty').value, 10), jenis: document.getElementById('input-jenis').value, 
-        status: document.getElementById('input-status').value, tanggal: document.getElementById('input-tanggal').value
+    function renderRacks() {
+      const container = document.getElementById('rack-container');
+      container.innerHTML = '';
+      
+      const colorMap = {
+        10: 'bg-fuchsia-600',
+        9: 'bg-purple-500',   
+        8: 'bg-indigo-500',   
+        7: 'bg-teal-500',     
+        6: 'bg-cyan-500',     // Level 6
+        5: 'bg-slate-400',    // Level 5
+        4: 'bg-orange-500',   // Level 4
+        3: 'bg-red-600',      // Level 3
+        2: 'bg-green-700',    // Level 2
+        1: 'bg-blue-700'      // Level 1
       };
 
-      // --- OPTIMISTIC UI UPDATE: LANGSUNG UPDATE UI SEBELUM PENGIRIMAN ---
-      containerData.unshift(newData); 
-      renderRacks(); 
-      renderSummary(); 
-      renderTable();
-      
-      modal.classList.add('hidden'); 
-      form.reset();
-      playBeep();
+      rackConfig.forEach(rack => {
+        const maxLevel = Number(rack.levels) || 5; 
+        const totalCap = Number(rack.total) || 100;
+        
+        const currentQty = containerData.filter(d => d.rack === rack.id).reduce((sum, item) => {
+          return item.jenis === 'Masuk' ? sum + Number(item.qty) : sum - Number(item.qty);
+        }, 0);
+        
+        const usagePercentage = Math.min(100, Math.max(0, Math.round((currentQty / totalCap) * 100)));
+        
+        // Membaca Kolom D (Qty per Level) dari Sheet 2 jika ada, atau membagi rata kapasitas total
+        const palletsPerLevel = Number(rack.palletsLevel) || (totalCap / maxLevel);
 
-      // Tampilkan notifikasi sedang memproses di background
-      showToast("⏳ Sedang menyimpan ke database...", "info");
+        let badgeColor = usagePercentage > 85 ? 'bg-red-100 text-red-700' : usagePercentage > 50 ? 'bg-amber-100 text-amber-700' : 'bg-emerald-100 text-emerald-700';
 
-      // --- PROSES PENGIRIMAN KE GOOGLE SHEET SECARA ASYNCHRONOUS ---
-      const urlToFetch = GAS_URL + "?action=insert&t=" + Date.now() + "&data=" + encodeURIComponent(JSON.stringify(newData));
-      
-      fetch(urlToFetch)
-        .then(res => res.json())
-        .then(result => {
-          if(result.status === 'success') {
-            // Berhasil
-            showToast("✔ Data berhasil terinput ke database", "success");
-            // Memastikan data 100% sama dengan server setelah berhasil simpan
-            fetchDataSilently();
-          } else {
-            // Rollback jika server gagal
-            containerData.shift(); 
-            renderRacks(); renderSummary(); renderTable();
-            showToast("✖ GAGAL: " + result.message, "error");
-          }
-        })
-        .catch(error => {
-          // Rollback jika internet putus
-          containerData.shift(); 
-          renderRacks(); renderSummary(); renderTable();
-          showToast("✖ GAGAL MENGIRIM! Periksa koneksi internet.", "error");
-          console.error("Save Error:", error);
-        });
-    });
+        let barsHtml = '';
+        
+        // Looping dinamis sesuai jumlah level dari Sheet 2!
+        for (let i = 0; i < maxLevel; i++) {
+          const levelNum = maxLevel - i; 
+          const colorClass = colorMap[levelNum] || 'bg-slate-500';
+          
+          const levelQty = containerData.filter(d => d.rack === rack.id && Number(d.level) === levelNum).reduce((sum, item) => {
+            return item.jenis === 'Masuk' ? sum + Number(item.qty) : sum - Number(item.qty);
+          }, 0);
 
-    window.onload = () => { 
-      loadInitialData(); 
-      // JALANKAN AUTO-SYNC BACKGROUND SETIAP 15 DETIK
-      setInterval(fetchDataSilently, 15000);
+          const filledInLevel = Math.max(0, Math.min(palletsPerLevel, levelQty));
+          const fillPercentage = (filledInLevel / palletsPerLevel) * 100;
+          
+          barsHtml += `
+            <div class="flex items-center gap-3 mb-2 last:mb-0">
+              <div class="w-7 h-7 flex items-center justify-center text-sm font-bold text-white rounded shadow-sm ${colorClass}">${levelNum}</div>
+              <div class="h-4 w-full bg-slate-200 rounded-sm relative overflow-hidden shadow-inner">
+                <div class="h-full ${colorClass} transition-all duration-1000 ease-out" style="width: ${fillPercentage}%"></div>
+              </div>
+            </div>`;
+        }
+
+        container.innerHTML += `
+          <div class="bg-white border border-slate-200 rounded-xl hover:shadow-md transition-all flex flex-col justify-between">
+            <div class="p-5 border-b border-slate-100 flex justify-between items-start">
+              <div>
+                <h3 class="font-bold text-lg text-slate-800">Rack ${rack.id}</h3>
+                <span class="inline-block px-2 rounded text-xs font-bold mt-1 ${badgeColor}">${usagePercentage}% TERISI</span>
+              </div>
+              <div class="text-right">
+                <div class="text-[11px] font-semibold text-slate-400 uppercase tracking-wider">Kapasitas</div>
+                <div class="text-sm font-bold text-slate-700"><span class="text-slate-900 font-bold">${currentQty}</span> / ${totalCap}</div>
+              </div>
+            </div>
+            <div class="p-5 bg-slate-50 rounded-b-xl flex-1 flex flex-col justify-end">
+              ${barsHtml}
+            </div>
+          </div>`;
+      });
+    }
+
+    // --- FUNGSI SIMPAN DATA ---
+    document.getElementById('form-container').onsubmit = async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('btn-submit');
+      const originalText = btn.innerText;
+      btn.innerText = "⏳ Sedang Menyimpan...";
+      btn.disabled = true;
+
+      const payload = {
+        location: document.getElementById('input-location').value,
+        licencePlate: document.getElementById('input-licence').value,
+        rack: document.getElementById('input-rak').value,
+        row: document.getElementById('input-row').value,
+        level: document.getElementById('input-level').value,
+        qty: document.getElementById('input-qty').value,
+        jenis: document.getElementById('input-jenis').value,
+        status: document.getElementById('input-status').value,
+        tanggal: document.getElementById('input-tanggal').value
+      };
+
+      try {
+        const urlToFetch = GAS_URL + "?action=insert&t=" + Date.now() + "&data=" + encodeURIComponent(JSON.stringify(payload));
+        const res = await fetch(urlToFetch);
+        const result = await res.json();
+        
+        if(result.status === 'success') {
+          showToast("✔ Data berhasil terinput ke Spreadsheet!", "success");
+          closeModal();
+          playBeep();
+          
+          // Setelah berhasil, tarik data baru (termasuk config jika berubah)
+          loadData();
+        } else {
+          showToast("✖ GAGAL: " + result.message, "error");
+        }
+      } catch (error) {
+        showToast("✖ GAGAL MENGIRIM! Periksa koneksi internet.", "error");
+        console.error("Save Error:", error);
+      } finally {
+        btn.innerText = originalText;
+        btn.disabled = false;
+      }
     };
+
+    // --- LOGIKA SCANNER ---
+    let html5QrCode = null;
+    window.startScan = (target) => {
+      document.getElementById('scanner-screen').classList.remove('hidden');
+      document.getElementById('reader').innerHTML = '';
+      document.getElementById('scan-error').innerText = ''; 
+      
+      const subtitle = document.getElementById('scanner-subtitle');
+      if (subtitle) {
+        subtitle.innerText = target === 'licence' ? 'SCAN LICENCE PLATE (LP-...)' : 'SCAN LOKASI RAK';
+      }
+
+      setTimeout(() => {
+        html5QrCode = new Html5Qrcode("reader");
+        html5QrCode.start(
+          { facingMode: "environment" }, 
+          { fps: 15, qrbox: 250 }, 
+          (text) => {
+            const scannedText = text.trim();
+            const isLicencePlate = scannedText.toUpperCase().startsWith('LP-');
+
+            if (target === 'licence' && !isLicencePlate) {
+              document.getElementById('scan-error').innerText = "✖ SALAH INPUT! QR bukan Licence Plate (Harus awalan LP-)";
+              return; 
+            }
+
+            if (target === 'location' && isLicencePlate) {
+              document.getElementById('scan-error').innerText = "✖ SALAH INPUT! Ini QR Licence Plate, harap scan QR Lokasi.";
+              return; 
+            }
+
+            document.getElementById(`input-${target}`).value = scannedText;
+            
+            if (target === 'location') {
+              parseLocationData(scannedText);
+            }
+
+            window.closeScanner();
+            showToast("✔ Berhasil memindai!", "success");
+            playBeep();
+          }, 
+          () => {}
+        ).catch(()=> {
+            document.getElementById('scan-error').innerText = "Gagal memanggil kamera. Pastikan izin aktif.";
+        });
+      }, 350);
+    };
+
+    window.closeScanner = () => {
+      if(html5QrCode) {
+        html5QrCode.stop().then(() => { html5QrCode.clear(); html5QrCode = null; }).catch(() => {});
+      }
+      document.getElementById('scanner-screen').classList.add('hidden');
+    };
+
+    // --- NAVIGATION MENU ---
+    function switchMenu(menu) {
+      const secLayout = document.getElementById('section-layout');
+      const secContainer = document.getElementById('section-container');
+      const title = document.getElementById('page-title');
+      const btnDashboard = document.getElementById('menu-dashboard');
+      const btnWarehouse = document.getElementById('menu-layout-rack'); 
+      const btnManagement = document.getElementById('menu-warehouse-management');
+      const dashboardActions = document.getElementById('dashboard-action-buttons');
+
+      if(menu === 'Dashboard') {
+        secLayout.classList.remove('hidden'); 
+        secContainer.classList.remove('hidden'); 
+        if (dashboardActions) dashboardActions.classList.remove('hidden');
+        title.innerText = "Warehouse Dashboard";
+        btnDashboard.className = 'px-6 py-3 cursor-pointer font-semibold text-blue-700 bg-blue-50/50 border-r-4 border-blue-600 transition-colors';
+        btnWarehouse.className = 'px-6 py-3 cursor-pointer font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-r-4 border-transparent transition-colors';
+        btnManagement.className = 'px-6 py-3 cursor-pointer font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-r-4 border-transparent transition-colors';
+      } 
+      else if (menu === 'Layout Rack') {
+        secLayout.classList.remove('hidden'); 
+        secContainer.classList.add('hidden'); 
+        if (dashboardActions) dashboardActions.classList.add('hidden');
+        title.innerText = "Visualisasi Layout Rack";
+        btnWarehouse.className = 'px-6 py-3 cursor-pointer font-semibold text-blue-700 bg-blue-50/50 border-r-4 border-blue-600 transition-colors';
+        btnDashboard.className = 'px-6 py-3 cursor-pointer font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-r-4 border-transparent transition-colors';
+        btnManagement.className = 'px-6 py-3 cursor-pointer font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-r-4 border-transparent transition-colors';
+      }
+      else if (menu === 'Warehouse Management') {
+        secLayout.classList.add('hidden'); 
+        secContainer.classList.remove('hidden'); 
+        if (dashboardActions) dashboardActions.classList.add('hidden');
+        title.innerText = "Warehouse Management";
+        btnManagement.className = 'px-6 py-3 cursor-pointer font-semibold text-blue-700 bg-blue-50/50 border-r-4 border-blue-600 transition-colors';
+        btnDashboard.className = 'px-6 py-3 cursor-pointer font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-r-4 border-transparent transition-colors';
+        btnWarehouse.className = 'px-6 py-3 cursor-pointer font-medium text-slate-500 hover:text-slate-900 hover:bg-slate-50 border-r-4 border-transparent transition-colors';
+      }
+      if(window.innerWidth < 768) toggleSidebar();
+    }
+
+    function toggleSidebar() {
+      const sidebar = document.getElementById('sidebar');
+      const overlay = document.getElementById('mobile-overlay');
+      
+      if (window.innerWidth >= 768) {
+          sidebar.classList.toggle('md:hidden');
+      } else {
+          sidebar.classList.toggle('-translate-x-full');
+          overlay.classList.toggle('hidden');
+      }
+    }
+
+    function openModal() { 
+      document.getElementById('form-container').reset(); 
+      updateLevelDropdown(); // pastikan list dropdown update sesuai rak pertama terpilih
+      document.getElementById('input-modal').classList.remove('hidden'); 
+      document.getElementById('input-tanggal').valueAsDate = new Date(); 
+    }
     
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('-translate-x-full'); document.getElementById('mobile-overlay').classList.toggle('hidden'); }
-    document.getElementById('mobile-menu-btn').addEventListener('click', toggleSidebar);
-    document.getElementById('mobile-overlay').addEventListener('click', toggleSidebar);
+    function closeModal() { 
+      document.getElementById('input-modal').classList.add('hidden'); 
+      document.getElementById('form-container').reset(); 
+    }
+
+    window.onload = loadData;
   </script>
 </body>
 </html>
