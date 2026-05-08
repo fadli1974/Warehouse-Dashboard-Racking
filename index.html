@@ -110,7 +110,7 @@
         
         <!-- Judul & Hamburger Menu -->
         <div class="shrink-0 w-full xl:w-auto flex items-center justify-center xl:justify-start gap-4">
-          <button onclick="toggleSidebar()" class="hidden md:flex p-2.5 bg-white rounded-xl shadow-sm border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none items-center justify-center">
+          <button onclick="toggleDesktopSidebar()" class="hidden md:flex p-2.5 bg-white rounded-lg shadow-sm border border-slate-200 text-slate-700 hover:bg-slate-50 transition-colors focus:outline-none items-center justify-center">
             <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
           </button>
           <div class="text-center xl:text-left">
@@ -119,7 +119,7 @@
           </div>
         </div>
 
-        <!-- Summary Horizontal (Tengah) - Untuk Menu Dashboard, Layout, WM -->
+        <!-- Summary Horizontal (Tengah) - Selalu Tampil -->
         <div id="dashboard-summary" class="flex gap-4 w-full xl:w-auto overflow-x-auto hide-scrollbar flex-1 justify-start xl:justify-center px-1 py-1 transition-all">
           <div class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[120px] flex-1 max-w-[160px]">
             <div class="text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Total Rack</div>
@@ -137,31 +137,6 @@
             <div class="text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Utilisasi</div>
             <div id="summary-utilization" class="font-black text-2xl text-slate-800">0%</div>
           </div>
-        </div>
-
-        <!-- Action Buttons (Tengah) - KHUSUS UNTUK MENU REPORT -->
-        <div id="report-actions" class="hidden gap-4 w-full xl:w-auto overflow-x-auto hide-scrollbar flex-1 justify-start xl:justify-center px-1 py-1 transition-all">
-          <button onclick="showToast('Fitur Download Template sedang diproses...', 'info')" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[190px] text-left hover:bg-slate-50 hover:border-blue-300 transition-all focus:outline-none">
-            <div class="text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Format Standar</div>
-            <div class="font-black text-xl text-slate-800 flex items-center gap-2">
-                <svg class="w-5 h-5 text-blue-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
-                Template
-            </div>
-          </button>
-          <button onclick="showToast('Fitur Upload sedang diproses...', 'info')" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[140px] flex-1 max-w-[200px] text-left hover:bg-slate-50 hover:border-emerald-300 transition-all focus:outline-none">
-            <div class="text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Import Excel/CSV</div>
-            <div class="font-black text-xl text-slate-800 flex items-center gap-2">
-                <svg class="w-5 h-5 text-emerald-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
-                Upload Data
-            </div>
-          </button>
-          <button onclick="showToast('Fitur Export sedang diproses...', 'info')" class="bg-white border border-slate-200/60 shadow-sm rounded-xl p-4 min-w-[160px] flex-1 max-w-[220px] text-left hover:bg-slate-50 hover:border-amber-300 transition-all focus:outline-none">
-            <div class="text-[11px] font-bold text-slate-400 mb-1 uppercase tracking-wider">Export Excel/CSV</div>
-            <div class="font-black text-xl text-slate-800 flex items-center gap-2">
-                <svg class="w-5 h-5 text-amber-600 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4 4l-4 4m0 0l-4-4m4 4V4"></path></svg>
-                Download Data
-            </div>
-          </button>
         </div>
 
         <!-- Tombol Aksi Kanan -->
@@ -778,39 +753,24 @@
       const secLayout = document.getElementById('section-layout');
       const secContainer = document.getElementById('section-container');
       const secReport = document.getElementById('section-report');
-      const secSummary = document.getElementById('dashboard-summary');
-      const secReportActions = document.getElementById('report-actions');
 
       // Reset visibility
       secLayout.classList.add('hidden'); 
       secContainer.classList.add('hidden'); 
       secReport.classList.add('hidden');
-      
-      secSummary.classList.add('hidden');
-      secSummary.classList.remove('flex');
-      secReportActions.classList.add('hidden');
-      secReportActions.classList.remove('flex');
 
       if (selectedMenu === 'Dashboard') {
         secLayout.classList.remove('hidden'); 
         secContainer.classList.remove('hidden');
-        secSummary.classList.remove('hidden');
-        secSummary.classList.add('flex');
         pageTitle.innerText = 'Warehouse Dashboard';
       } else if (selectedMenu === 'Layout Rack') {
         secLayout.classList.remove('hidden');
-        secSummary.classList.remove('hidden');
-        secSummary.classList.add('flex');
         pageTitle.innerText = 'Layout Rack';
       } else if (selectedMenu === 'Warehouse Management') {
         secContainer.classList.remove('hidden');
-        secSummary.classList.remove('hidden');
-        secSummary.classList.add('flex');
         pageTitle.innerText = 'Warehouse Management';
       } else if (selectedMenu === 'Report') {
         secReport.classList.remove('hidden');
-        secReportActions.classList.remove('hidden');
-        secReportActions.classList.add('flex');
         pageTitle.innerText = 'Report';
       }
 
